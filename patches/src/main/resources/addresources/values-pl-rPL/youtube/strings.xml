@@ -455,9 +455,9 @@ Ograniczenia:
   <string name="morphe_copy_video_url_title">Przycisk kopiowania linku do filmu</string>
   <string name="morphe_copy_video_url_summary_on">Widoczny. Stuknij, aby skopiować link do filmu. Przytrzymaj, aby skopiować link do filmu z czasem</string>
   <string name="morphe_copy_video_url_summary_off">Ukryty</string>
-  <string name="morphe_copy_video_url_timestamp_title">Kopiuj znacznik czasu</string>
-  <string name="morphe_copy_video_url_timestamp_summary_on">Przycisk Kopiuj adres URL wideo kopiuje z znacznikiem czasu. Przy długim naciśnięciu kopiuje bez znacznika czasu</string>
-  <string name="morphe_copy_video_url_timestamp_summary_off">Przycisk Kopiuj adres URL wideo kopiuje bez znacznika czasu. Przy długim naciśnięciu kopiuje z znacznikiem czasu</string>
+  <string name="morphe_copy_video_url_timestamp_title">Kopiowanie linku</string>
+  <string name="morphe_copy_video_url_timestamp_summary_on">Z czasem. Przytrzymaj, aby skopiować bez czasu</string>
+  <string name="morphe_copy_video_url_timestamp_summary_off">Bez czasu. Przytrzymaj, aby skopiować z czasem</string>
   <!-- interaction.dialog.removeViewerDiscretionDialogPatch -->
   <string name="morphe_remove_viewer_discretion_dialog_title">Ostrzeżenie o treściach wrażliwych</string>
   <string name="morphe_remove_viewer_discretion_dialog_summary_on">Usunięte</string>
@@ -1419,12 +1419,6 @@ Ograniczenie: Przycisk wstecz na pasku może nie działać"</string>
   <string name="morphe_miniplayer_disable_rounded_corners_title">Narożniki miniodtwarzacza</string>
   <string name="morphe_miniplayer_disable_rounded_corners_summary_on">Kwadratowe</string>
   <string name="morphe_miniplayer_disable_rounded_corners_summary_off">Zaokrąglone</string>
-  <string name="morphe_miniplayer_double_tap_action_title">Gesty zmiany rozmiaru miniodtwarzacza</string>
-  <string name="morphe_miniplayer_double_tap_action_summary_on">"Włączone
-
-• Stuknij dwukrotnie, aby zwiększyć rozmiar miniodtwarzacza
-• Stuknij dwukrotnie ponownie, aby przywrócić oryginalny rozmiar"</string>
-  <string name="morphe_miniplayer_double_tap_action_summary_off">Wyłączone</string>
   <string name="morphe_miniplayer_disable_drag_and_drop_title">Gest przeciągnięcia i upuszczenia</string>
   <string name="morphe_miniplayer_disable_drag_and_drop_summary_on">Wyłączony</string>
   <string name="morphe_miniplayer_disable_drag_and_drop_summary_off">"Włączony
@@ -1438,11 +1432,6 @@ Miniodtwarzacz można przeciągnąć poza ekran w lewo lub prawo"</string>
   <string name="morphe_miniplayer_hide_overlay_buttons_title">Przyciski w miniodtwarzaczu</string>
   <string name="morphe_miniplayer_hide_overlay_buttons_summary_on">Ukryte</string>
   <string name="morphe_miniplayer_hide_overlay_buttons_summary_off">Widoczne</string>
-  <string name="morphe_miniplayer_hide_overlay_buttons_legacy_title">Przyciski Rozwiń i Zamknij</string>
-  <string name="morphe_miniplayer_hide_overlay_buttons_legacy_summary_on">"Ukryte
-
-Przesuń, aby rozwinąć lub zamknąć"</string>
-  <string name="morphe_miniplayer_hide_overlay_buttons_legacy_summary_off">Widoczne</string>
   <string name="morphe_miniplayer_hide_subtext_title">Tekst pomocniczy</string>
   <string name="morphe_miniplayer_hide_subtext_summary_on">Ukryty</string>
   <string name="morphe_miniplayer_hide_subtext_summary_off">Widoczny</string>
@@ -1521,9 +1510,9 @@ Stuknij tutaj, aby dowiedzieć się więcej o DeArrow"</string>
   <string name="morphe_alt_thumbnail_dearrow_error_generic">DeArrow jest niedostępny</string>
   <!-- misc.announcements.announcementsPatch -->
   <!-- misc.playercontrols.playerControlsPatch -->
-  <string name="morphe_restore_old_player_buttons_title">Przywróć stary styl przycisków odtwarzacza</string>
-  <string name="morphe_restore_old_player_buttons_summary_on">Wyświetlany jest cienki styl odtwarzacza</string>
-  <string name="morphe_restore_old_player_buttons_summary_off">Wyświetlany jest pogrubiony styl odtwarzacza</string>
+  <string name="morphe_restore_old_player_buttons_title">Styl przycisków odtwarzacza</string>
+  <string name="morphe_restore_old_player_buttons_summary_on">Cienkie ikony</string>
+  <string name="morphe_restore_old_player_buttons_summary_off">Pogrubione ikony</string>
   <!-- misc.dimensions.spoof.spoofDeviceDimensionsPatch -->
   <string name="morphe_spoof_device_dimensions_title">Fałszowanie rozdzielczości urządzenia</string>
   <string name="morphe_spoof_device_dimensions_summary_on">"Włączone
