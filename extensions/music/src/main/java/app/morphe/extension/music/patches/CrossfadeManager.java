@@ -50,6 +50,33 @@ public class CrossfadeManager {
 
     private static final String TAG = "Morphe_Crossfade";
 
+    /**
+     * Fade curve profiles available for crossfade.
+     * Uses switch instead of abstract methods to avoid anonymous inner classes,
+     * which break Morphe's EnumSetting (getClass().getEnumConstants() returns null
+     * for anonymous enum subclasses).
+     */
+    public enum FadeCurve {
+        EQUAL_POWER,
+        EASE_OUT_CUBIC,
+        EASE_OUT_QUAD,
+        SMOOTHSTEP;
+
+        public float out(float t) {
+            switch (this) {
+                case EASE_OUT_CUBIC: return 1.0f - t * t * t;
+                case EASE_OUT_QUAD:  return (1.0f - t) * (1.0f - t);
+                case SMOOTHSTEP:    return 1.0f - (3.0f * t * t - 2.0f * t * t * t);
+                default:            return (float) Math.cos(t * Math.PI / 2.0);
+            }
+        }
+
+        public float in(float t) {
+            if (this == SMOOTHSTEP) return 3.0f * t * t - 2.0f * t * t * t;
+            return (float) Math.sin(t * Math.PI / 2.0);
+        }
+    }
+
     private static volatile boolean sessionPaused = false;
 
     /**
@@ -74,11 +101,16 @@ public class CrossfadeManager {
     private static final int READY_TIMEOUT_MS = 10000;
     private static final int STATE_READY = 3;
     private static final int REASON_DIRECTOR_RESET = 5;
+    private static final long AUTO_ADVANCE_THRESHOLD_MS = 5000;
+    private static final long MONITOR_POLL_MS = 100;
 
     private static volatile Object oldPlayer = null;
     private static volatile Object activeDll = null;
     private static volatile Object crossfadeInPlayer = null;
     private static volatile Object crossfadeOutPlayer = null;
+
+    private static WeakReference<Object> lastAtadRef = new WeakReference<>(null);
+    private static Runnable autoAdvanceMonitorRunnable = null;
 
     private static int playersCreated = 0;
     private static int playersReleased = 0;
@@ -93,6 +125,7 @@ public class CrossfadeManager {
     private static int suppressedReasonCount = 0;
 
     public static void onBeforeStopVideo(Object atadInstance, int reason) {
+        lastAtadRef = new WeakReference<>(atadInstance);
         tryAttachLongPressHandler();
 
         if (reason != REASON_DIRECTOR_RESET) {
@@ -128,9 +161,6 @@ public class CrossfadeManager {
             return;
         }
 
-        Log.d(TAG, "stopVideo(5): STARTING crossfade [enabled=" + isEnabled()
-                + " paused=" + sessionPaused + " inVideo=" + inVideoMode + "]");
-
         try {
             Object athu = getAthuFromAtad(atadInstance);
             if (athu == null) {
@@ -143,6 +173,31 @@ public class CrossfadeManager {
                 Log.e(TAG, "athu.h (ExoPlayer) is null");
                 return;
             }
+
+            boolean isAutoAdvance = false;
+            try {
+                long pos = callLongMethod(currentExo, "v");
+                long duration = callLongMethod(currentExo, "w");
+                long remaining = (duration > 0) ? duration - pos : Long.MAX_VALUE;
+                isAutoAdvance = duration > 0 && remaining >= 0 && remaining < AUTO_ADVANCE_THRESHOLD_MS;
+                Log.d(TAG, "stopVideo(5): pos=" + pos + "ms dur=" + duration
+                        + "ms remaining=" + remaining
+                        + "ms → " + (isAutoAdvance ? "AUTO-ADVANCE" : "MANUAL SKIP"));
+            } catch (Exception e) {
+                Log.w(TAG, "Could not read position/duration, assuming manual skip", e);
+            }
+
+            if (isAutoAdvance && !Settings.CROSSFADE_ON_AUTO_ADVANCE.get()) {
+                Log.d(TAG, "stopVideo(5): skip — auto-advance crossfade disabled");
+                return;
+            }
+            if (!isAutoAdvance && !Settings.CROSSFADE_ON_SKIP.get()) {
+                Log.d(TAG, "stopVideo(5): skip — manual skip crossfade disabled");
+                return;
+            }
+
+            Log.d(TAG, "stopVideo(5): STARTING crossfade [enabled=" + isEnabled()
+                    + " paused=" + sessionPaused + " inVideo=" + inVideoMode + "]");
 
             int currentState = callIntMethod(currentExo, "r");
             Log.d(TAG, "Current player state=" + currentState
@@ -233,6 +288,8 @@ public class CrossfadeManager {
 
             releaseOld();
             oldPlayer = currentExo;
+            crossfadeOutPlayer = currentExo;
+            crossfadeInPlayer = newExo;
             crossfadeInProgress = true;
 
             Log.d(TAG, "Old player preserved (keeps playing), polling for new track ready");
@@ -254,6 +311,11 @@ public class CrossfadeManager {
         tryAttachLongPressHandler();
 
         if (!isEnabled() || sessionPaused || getCrossfadeDurationMs() <= 0 || crossfadeInProgress) {
+            return;
+        }
+
+        if (!Settings.CROSSFADE_ON_AUTO_ADVANCE.get()) {
+            Log.d(TAG, "PlayNext: skip — auto-advance crossfade disabled");
             return;
         }
 
@@ -321,8 +383,11 @@ public class CrossfadeManager {
 
             releaseOld();
             oldPlayer = currentExo;
+            crossfadeOutPlayer = currentExo;
+            crossfadeInPlayer = newExo;
             crossfadeInProgress = true;
 
+            Log.d(TAG, "PlayNext: old player preserved, polling for new track ready");
             pollForNewTrackReady(newExo, currentExo);
 
         } catch (Exception e) {
@@ -342,30 +407,60 @@ public class CrossfadeManager {
 
     /**
      * Hooked at the top of atad.m15631I (MedialibPlayer.pauseVideo).
-     * Diagnostic only — never blocks.  If crossfade is in progress,
-     * accelerate it to completion so the user gets instant response.
+     * Returns true to BLOCK the pause (return-void in smali), false to allow.
+     *
+     * During an auto-advance crossfade the old track reaches ENDED, which
+     * causes YTM to call pauseVideo().  If we let that through it pauses
+     * the NEW player (athu.h was already swapped) and kills playback.
+     * We detect this by checking whether the outgoing player is ENDED.
+     *
+     * A genuine user pause (old player still READY) aborts the crossfade
+     * and lets the pause proceed normally.
      */
-    public static void onPauseVideo() {
+    public static boolean onPauseVideo() {
         long now = System.currentTimeMillis();
-        if (now - lastPauseEventMs < EVENT_DEDUP_WINDOW_MS) return;
+        if (now - lastPauseEventMs < EVENT_DEDUP_WINDOW_MS) return false;
         lastPauseEventMs = now;
 
-        Log.d(TAG, "onPauseVideo [crossfading=" + crossfadeInProgress + "]");
-        if (crossfadeInProgress) {
-            abortCrossfadeNow();
+        if (!crossfadeInProgress) {
+            Log.d(TAG, "onPauseVideo [crossfading=false] — allowing");
+            return false;
         }
+
+        int outState = -1;
+        try {
+            Object out = crossfadeOutPlayer;
+            if (out != null) outState = callIntMethod(out, "r");
+        } catch (Exception ignored) {}
+
+        if (outState == 4) {
+            Log.d(TAG, "onPauseVideo [crossfading=true, outState=ENDED] — BLOCKING pause (auto-advance expected)");
+            return true;
+        }
+
+        Log.d(TAG, "onPauseVideo [crossfading=true, outState=" + outState + "] — user pause, aborting crossfade");
+        abortCrossfadeNow();
+        return false;
     }
 
     /**
      * Hooked at the top of atad.m15645p (MedialibPlayer.playVideo).
-     * Diagnostic only — never blocks.
+     * Captures the atad instance for the auto-advance monitor and starts it if idle.
      */
-    public static void onPlayVideo() {
+    public static void onPlayVideo(Object atadInstance) {
         long now = System.currentTimeMillis();
         if (now - lastPlayEventMs < EVENT_DEDUP_WINDOW_MS) return;
         lastPlayEventMs = now;
 
-        Log.d(TAG, "onPlayVideo [crossfading=" + crossfadeInProgress + "]");
+        if (atadInstance != null) {
+            lastAtadRef = new WeakReference<>(atadInstance);
+        }
+
+        Log.d(TAG, "onPlayVideo [crossfading=" + crossfadeInProgress
+                + ", atad=" + (atadInstance != null) + "]");
+        if (!crossfadeInProgress) {
+            startAutoAdvanceMonitor();
+        }
     }
 
     // ------------------------------------------------------------------ //
@@ -431,6 +526,89 @@ public class CrossfadeManager {
     }
 
     // ------------------------------------------------------------------ //
+    //  Auto-advance: position monitor & timed crossfade                   //
+    // ------------------------------------------------------------------ //
+
+    private static void startAutoAdvanceMonitor() {
+        stopAutoAdvanceMonitor();
+        if (!isEnabled() || !Settings.CROSSFADE_ON_AUTO_ADVANCE.get()) return;
+
+        autoAdvanceMonitorRunnable = new Runnable() {
+            @Override
+            public void run() {
+                if (!isEnabled() || sessionPaused || !Settings.CROSSFADE_ON_AUTO_ADVANCE.get()
+                        || crossfadeInProgress) {
+                    return;
+                }
+
+                Object atad = lastAtadRef.get();
+                if (atad == null) {
+                    mainHandler.postDelayed(this, MONITOR_POLL_MS);
+                    return;
+                }
+
+                try {
+                    Object athu = getAthuFromAtadQuiet(atad);
+                    if (athu == null) { mainHandler.postDelayed(this, MONITOR_POLL_MS); return; }
+                    Object exo = getFieldValue(athu, "h");
+                    if (exo == null) { mainHandler.postDelayed(this, MONITOR_POLL_MS); return; }
+
+                    int state = callIntMethod(exo, "r");
+                    if (state != STATE_READY) {
+                        mainHandler.postDelayed(this, MONITOR_POLL_MS);
+                        return;
+                    }
+
+                    long pos = callLongMethod(exo, "v");
+                    long dur = callLongMethod(exo, "w");
+                    if (dur <= 0) { mainHandler.postDelayed(this, MONITOR_POLL_MS); return; }
+
+                    long remaining = dur - pos;
+                    long fadeDuration = getCrossfadeDurationMs();
+
+                    if (remaining % 5000 < MONITOR_POLL_MS) {
+                        Log.d(TAG, "Auto-advance monitor: pos=" + pos
+                                + "ms dur=" + dur + "ms remaining=" + remaining
+                                + "ms trigger@" + fadeDuration + "ms");
+                    }
+
+                    if (dur <= fadeDuration) {
+                        mainHandler.postDelayed(this, MONITOR_POLL_MS);
+                        return;
+                    }
+
+                    if (remaining <= fadeDuration && remaining > 0) {
+                        Log.d(TAG, "Auto-advance: triggering playNextInQueue at remaining=" + remaining
+                                + "ms (fadeDuration=" + fadeDuration + "ms)");
+                        stopAutoAdvanceMonitor();
+                        try {
+                            findMethod(atad, "o").invoke(atad);
+                        } catch (Exception e) {
+                            Log.w(TAG, "playNextInQueue threw (queue may have advanced): "
+                                    + e.getMessage());
+                        }
+                        return;
+                    }
+
+                    mainHandler.postDelayed(this, MONITOR_POLL_MS);
+                } catch (Exception e) {
+                    Log.w(TAG, "Auto-advance monitor error", e);
+                    mainHandler.postDelayed(this, MONITOR_POLL_MS * 2);
+                }
+            }
+        };
+        mainHandler.postDelayed(autoAdvanceMonitorRunnable, MONITOR_POLL_MS);
+        Log.d(TAG, "Auto-advance monitor started");
+    }
+
+    private static void stopAutoAdvanceMonitor() {
+        if (autoAdvanceMonitorRunnable != null) {
+            mainHandler.removeCallbacks(autoAdvanceMonitorRunnable);
+            autoAdvanceMonitorRunnable = null;
+        }
+    }
+
+    // ------------------------------------------------------------------ //
     //  Volume animation (equal-power curve)                               //
     // ------------------------------------------------------------------ //
 
@@ -487,8 +665,9 @@ public class CrossfadeManager {
                 long elapsed = System.currentTimeMillis() - startTime;
                 float t = Math.min(1.0f, (float) elapsed / duration);
 
-                float outVol = (float) Math.cos(t * Math.PI / 2.0);
-                float inVol  = (float) Math.sin(t * Math.PI / 2.0);
+                FadeCurve curve = Settings.CROSSFADE_CURVE.get();
+                float outVol = curve.out(t);
+                float inVol  = curve.in(t);
 
                 try {
                     findMethod(outPlayer, "I", float.class).invoke(outPlayer, outVol);
@@ -515,6 +694,7 @@ public class CrossfadeManager {
                     } catch (Exception ignored) {}
                     releaseOld();
                     crossfadeInProgress = false;
+                    startAutoAdvanceMonitor();
                 }
             }
         });
@@ -596,6 +776,25 @@ public class CrossfadeManager {
     // ------------------------------------------------------------------ //
     //  athu traversal from atad                                           //
     // ------------------------------------------------------------------ //
+
+    /** Quiet variant for monitor polling — no traversal logging. */
+    private static Object getAthuFromAtadQuiet(Object atadInstance) {
+        try {
+            Object atxb = getFieldValue(atadInstance, "c");
+            if (atxb == null) return null;
+            for (int i = 0; i < 10; i++) {
+                Object delegate = tryGetField(atxb, "a");
+                if (delegate == null || delegate == atxb) break;
+                atxb = delegate;
+            }
+            if (tryGetField(atxb, "h") != null && tryGetField(atxb, "j") != null) {
+                return atxb;
+            }
+            return null;
+        } catch (Exception e) {
+            return null;
+        }
+    }
 
     /**
      * Walks atad.c → atux.a → ... → athu to reach the innermost
@@ -702,6 +901,9 @@ public class CrossfadeManager {
 
         if (sessionPaused) {
             abortCrossfadeNow();
+            stopAutoAdvanceMonitor();
+        } else {
+            startAutoAdvanceMonitor();
         }
 
         Context ctx = getAppContext();
@@ -1069,6 +1271,10 @@ public class CrossfadeManager {
 
     private static int callIntMethod(Object obj, String name) throws Exception {
         return (int) findMethod(obj, name).invoke(obj);
+    }
+
+    private static long callLongMethod(Object obj, String name) throws Exception {
+        return (long) findMethod(obj, name).invoke(obj);
     }
 
     private static void safeRelease(Object player) {

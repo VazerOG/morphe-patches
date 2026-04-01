@@ -7,6 +7,7 @@ import app.morphe.patches.music.misc.settings.PreferenceScreen
 import app.morphe.patches.music.misc.settings.settingsPatch
 import app.morphe.patches.music.shared.Constants.COMPATIBILITY_YOUTUBE_MUSIC
 import app.morphe.patches.shared.misc.settings.preference.InputType
+import app.morphe.patches.shared.misc.settings.preference.ListPreference
 import app.morphe.patches.shared.misc.settings.preference.NonInteractivePreference
 import app.morphe.patches.shared.misc.settings.preference.PreferenceScreenPreference
 import app.morphe.patches.shared.misc.settings.preference.SwitchPreference
@@ -34,6 +35,11 @@ val crossfadePatch = bytecodePatch(
                 sorting = PreferenceScreenPreference.Sorting.UNSORTED,
                 preferences = setOf(
                     SwitchPreference("morphe_music_crossfade_enabled"),
+                    ListPreference("morphe_music_crossfade_curve"),
+                    NonInteractivePreference(
+                        key = "morphe_music_crossfade_curve_preview",
+                        tag = "app.morphe.extension.music.settings.preference.CrossfadeCurvePreference",
+                    ),
                     TextPreference(
                         key = "morphe_music_crossfade_duration",
                         inputType = InputType.NUMBER,
@@ -43,6 +49,8 @@ val crossfadePatch = bytecodePatch(
                         key = "morphe_music_crossfade_duration_ms",
                         inputType = InputType.NUMBER,
                     ),
+                    SwitchPreference("morphe_music_crossfade_on_skip"),
+                    SwitchPreference("morphe_music_crossfade_on_auto_advance"),
                     SwitchPreference("morphe_music_crossfade_session_control"),
                     TextPreference(
                         key = "morphe_music_crossfade_long_press_duration",
@@ -85,14 +93,19 @@ val crossfadePatch = bytecodePatch(
         PauseVideoFingerprint.method.addInstructions(
             0,
             """
-                invoke-static {}, $EXTENSION_CLASS_DESCRIPTOR->onPauseVideo()V
+                invoke-static {}, $EXTENSION_CLASS_DESCRIPTOR->onPauseVideo()Z
+                move-result v0
+                if-eqz v0, :allow_pause
+                return-void
+                :allow_pause
+                nop
             """,
         )
 
         PlayVideoFingerprint.method.addInstructions(
             0,
             """
-                invoke-static {}, $EXTENSION_CLASS_DESCRIPTOR->onPlayVideo()V
+                invoke-static {p0}, $EXTENSION_CLASS_DESCRIPTOR->onPlayVideo(Ljava/lang/Object;)V
             """,
         )
     }
