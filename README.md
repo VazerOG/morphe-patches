@@ -167,6 +167,26 @@ All modifications made by Morphe, along with their dates, can be found in the Gi
 
 </details>
 
+
+## 🎵 New Patches
+
+### Track Crossfade
+A true crossfade implementation for YouTube Music — smoothly blends audio between consecutive tracks with no gaps or pops.
+
+**Settings** (Player → Crossfade):
+- Enable/disable crossfade
+- Crossfade duration (1–12 seconds)
+- Advanced mode (specify duration in milliseconds)
+- Session control (temporarily pause/resume crossfade without changing settings)
+- Configurable long-press duration for session toggle
+
+**Features:**
+- Long-press the shuffle button to pause or resume crossfade for the current session
+- Haptic feedback on session toggle
+- Video mode is automatically blocked while crossfade is active
+
+**Credits:** Originally implemented by [VazerOG](https://github.com/VazerOG).
+
 &nbsp;
 ## 📜 License
 
