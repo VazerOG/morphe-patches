@@ -35,19 +35,24 @@ All modifications made by Morphe, along with their dates, can be found in the Gi
 ## 🎵 New Patches
 
 ### Track Crossfade
-A true crossfade implementation for YouTube Music — smoothly blends audio between consecutive tracks with no gaps or pops.
+A true dual-player crossfade for YouTube Music — creates a second ExoPlayer via YTM's internal factory and smoothly blends audio between consecutive tracks with no gaps or pops.
 
 **Settings** (Player → Crossfade):
 - Enable/disable crossfade
+- Fade curve selection (Equal Power, Ease Out Cubic, Ease Out Quad, Smoothstep) with live preview
 - Crossfade duration (1–12 seconds)
-- Advanced mode (specify duration in milliseconds)
+- Advanced mode (specify duration in milliseconds, 500–30000ms)
+- Crossfade on manual skip (enable/disable independently)
+- Crossfade on auto-advance (enable/disable independently)
 - Session control (temporarily pause/resume crossfade without changing settings)
 - Configurable long-press duration for session toggle
 
 **Features:**
+- Auto-advance routed through YTM's `playNextInQueue` pipeline for proper queue advancement and media loading
 - Long-press the shuffle button to pause or resume crossfade for the current session
 - Haptic feedback on session toggle
 - Video mode is automatically blocked while crossfade is active
+- Pause-event blocking during auto-advance crossfade prevents playback interruption
 
 **Credits:** Originally implemented by [VazerOG](https://github.com/VazerOG).
 
