@@ -1,16 +1,26 @@
-# [1.23.0](https://github.com/MorpheApp/morphe-patches/compare/v1.22.0...v1.23.0) (2026-04-01)
+# [1.23.0-dev.2](https://github.com/MorpheApp/morphe-patches/compare/v1.23.0-dev.1...v1.23.0-dev.2) (2026-03-30)
+
+
+### Bug Fixes
+
+* Notification icon entries key mismatch ([#1040](https://github.com/MorpheApp/morphe-patches/issues/1040)) ([01ef1ea](https://github.com/MorpheApp/morphe-patches/commit/01ef1ea731196325a00de060d6f34f51644a94c5))
 
 
 ### Features
 
-* **YouTube Music - Track crossfade:** Add true dual-player crossfade between consecutive tracks. Creates a second ExoPlayer via YTM's internal factory, crossfades with a configurable volume curve, then releases the old player. Credits to [VazerOG](https://github.com/VazerOG) for the original implementation.
-  - Configurable duration (1–12 seconds or 500–30000ms in advanced mode)
-  - Fade curve selection: Equal Power, Ease Out Cubic, Ease Out Quad, Smoothstep — with live curve preview in settings
-  - Independent enable/disable for manual skip and auto-advance crossfade
-  - Auto-advance routed through YTM's `playNextInQueue` pipeline (`mo15738y` → `m15968e`) for proper queue advancement and media loading
-  - Session control: long-press the shuffle button to pause/resume crossfade with haptic feedback and configurable press duration
-  - Video mode automatically blocked while crossfade is active (audio-only requirement)
-  - Pause-event blocking during auto-advance crossfade to prevent YTM from killing the incoming player
+* **Reddit:** Add experimental support for `2026.13.0` ([722f5bf](https://github.com/MorpheApp/morphe-patches/commit/722f5bf34f986c51b9631575cd09eb64dac47314))
+
+# [1.23.0-dev.1](https://github.com/MorpheApp/morphe-patches/compare/v1.22.0...v1.23.0-dev.1) (2026-03-29)
+
+
+### Bug Fixes
+
+* **YouTube - Theme:** Carbon background color does not use custom background color with experimental app targets ([fa2439d](https://github.com/MorpheApp/morphe-patches/commit/fa2439d09286db83a0d588b407bbc5248e1589cf))
+
+
+### Features
+
+* **YouTube:** Add Morphe bold style player buttons ([#954](https://github.com/MorpheApp/morphe-patches/issues/954)) ([7f70b6f](https://github.com/MorpheApp/morphe-patches/commit/7f70b6f10ab5e600f4297d4208641a0ea2d817b1))
 
 # [1.22.0](https://github.com/MorpheApp/morphe-patches/compare/v1.21.1...v1.22.0) (2026-03-28)
 
