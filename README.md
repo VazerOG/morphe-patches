@@ -34,7 +34,7 @@ All modifications made by Morphe, along with their dates, can be found in the Gi
 &nbsp;
 ## 🎵 New Patches
 
-### Track Crossfade
+### True Crossfade
 A true dual-player crossfade for YouTube Music — creates a second ExoPlayer via YTM's internal factory and smoothly blends audio between consecutive tracks with no gaps or pops.
 
 **Settings** (Player → Crossfade):
