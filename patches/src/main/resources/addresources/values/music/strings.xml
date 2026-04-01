@@ -40,6 +40,27 @@ Second \"item\" text"</string>
     <string name="morphe_music_hide_video_ads_summary_on">Video ads are hidden</string>
     <string name="morphe_music_hide_video_ads_summary_off">Video ads are shown</string>
 
+    <!-- interaction.crossfade.crossfadePatch -->
+    <string name="morphe_music_crossfade_screen_title">Crossfade</string>
+    <string name="morphe_music_crossfade_screen_summary">Smoothly blend tracks into each other</string>
+    <string name="morphe_music_crossfade_enabled_title">Enable crossfade</string>
+    <string name="morphe_music_crossfade_enabled_summary_on">Tracks crossfade into each other</string>
+    <string name="morphe_music_crossfade_enabled_summary_off">Crossfade is disabled</string>
+    <string name="morphe_music_crossfade_duration_title">Crossfade duration (seconds)</string>
+    <string name="morphe_music_crossfade_duration_summary">Duration of the crossfade effect in seconds (1–12)</string>
+    <string name="morphe_music_crossfade_advanced_mode_title">Advanced duration</string>
+    <string name="morphe_music_crossfade_advanced_mode_summary_on">Duration is set in milliseconds</string>
+    <string name="morphe_music_crossfade_advanced_mode_summary_off">Duration is set in seconds</string>
+    <string name="morphe_music_crossfade_duration_ms_title">Crossfade duration (milliseconds)</string>
+    <string name="morphe_music_crossfade_duration_ms_summary">Precise crossfade duration in milliseconds (500–30000)</string>
+    <string name="morphe_music_crossfade_session_control_title">Session control</string>
+    <string name="morphe_music_crossfade_session_control_summary_on">"Long-press the shuffle button to pause or resume crossfade"</string>
+    <string name="morphe_music_crossfade_session_control_summary_off">Session control is disabled</string>
+    <string name="morphe_music_crossfade_long_press_duration_title">Long-press duration (ms)</string>
+    <string name="morphe_music_crossfade_long_press_duration_summary">How long to hold the shuffle button to toggle crossfade (300–2000)</string>
+    <string name="morphe_music_crossfade_credit_title" translatable="false">Credit</string>
+    <string name="morphe_music_crossfade_credit_summary" translatable="false">Crossfade system implemented by VazerOG</string>
+
     <!-- interaction.permanentrepeat.permanentRepeatPatch -->
     <string name="morphe_music_play_permanent_repeat_title">Enable permanent repeat</string>
     <string name="morphe_music_play_permanent_repeat_summary_on">Permanent repeat is enabled</string>

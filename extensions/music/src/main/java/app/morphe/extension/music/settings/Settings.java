@@ -10,6 +10,7 @@ import app.morphe.extension.music.patches.ChangeStartPagePatch.StartPage;
 import app.morphe.extension.shared.Logger;
 import app.morphe.extension.shared.settings.BooleanSetting;
 import app.morphe.extension.shared.settings.EnumSetting;
+import app.morphe.extension.shared.settings.IntegerSetting;
 import app.morphe.extension.shared.settings.SharedYouTubeSettings;
 import app.morphe.extension.shared.spoof.ClientType;
 
@@ -41,6 +42,14 @@ public class Settings extends SharedYouTubeSettings {
     public static final BooleanSetting CHANGE_MINIPLAYER_COLOR = new BooleanSetting("morphe_music_change_miniplayer_color", FALSE, true);
     public static final BooleanSetting ENABLE_FORCED_MINIPLAYER = new BooleanSetting("morphe_music_enable_forced_miniplayer", FALSE, true);
     public static final BooleanSetting PERMANENT_REPEAT = new BooleanSetting("morphe_music_play_permanent_repeat", FALSE, true);
+
+    // Crossfade
+    public static final BooleanSetting CROSSFADE_ENABLED = new BooleanSetting("morphe_music_crossfade_enabled", TRUE);
+    public static final BooleanSetting CROSSFADE_ADVANCED_MODE = new BooleanSetting("morphe_music_crossfade_advanced_mode", FALSE);
+    public static final IntegerSetting CROSSFADE_DURATION = new IntegerSetting("morphe_music_crossfade_duration", 3, parentNot(CROSSFADE_ADVANCED_MODE));
+    public static final IntegerSetting CROSSFADE_DURATION_MS = new IntegerSetting("morphe_music_crossfade_duration_ms", 3000, parent(CROSSFADE_ADVANCED_MODE));
+    public static final BooleanSetting CROSSFADE_SESSION_CONTROL = new BooleanSetting("morphe_music_crossfade_session_control", TRUE);
+    public static final IntegerSetting CROSSFADE_LONG_PRESS_DURATION = new IntegerSetting("morphe_music_crossfade_long_press_duration", 800);
 
     // Miscellaneous
     public static final EnumSetting<ClientType> SPOOF_VIDEO_STREAMS_CLIENT_TYPE = new EnumSetting<>("morphe_spoof_video_streams_client_type",
