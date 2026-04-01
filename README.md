@@ -23,9 +23,6 @@
 </p>
 &nbsp;
 
-# 🧩 Patches
-Morphe Patches
-
 ## ❓ About
 
 Morphe Patches are based off the prior work of [ReVanced](https://github.com/ReVanced/revanced-patches).
