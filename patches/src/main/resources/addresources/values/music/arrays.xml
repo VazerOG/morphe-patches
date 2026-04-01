@@ -75,6 +75,20 @@
         <item>CUSTOM</item>
     </string-array>
 
+    <!-- interaction.crossfade.crossfadePatch -->
+    <string-array name="morphe_music_crossfade_curve_entries">
+        <item>@string/morphe_music_crossfade_curve_entry_equal_power</item>
+        <item>@string/morphe_music_crossfade_curve_entry_ease_out_cubic</item>
+        <item>@string/morphe_music_crossfade_curve_entry_ease_out_quad</item>
+        <item>@string/morphe_music_crossfade_curve_entry_smoothstep</item>
+    </string-array>
+    <string-array name="morphe_music_crossfade_curve_entry_values">
+        <item>EQUAL_POWER</item>
+        <item>EASE_OUT_CUBIC</item>
+        <item>EASE_OUT_QUAD</item>
+        <item>SMOOTHSTEP</item>
+    </string-array>
+
     <!-- misc.fix.playback.spoofVideoStreamsPatch -->
     <string-array name="morphe_spoof_video_streams_client_type_entries">
         <item>Android Reel</item>

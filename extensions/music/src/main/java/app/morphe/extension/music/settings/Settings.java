@@ -7,6 +7,7 @@ import static app.morphe.extension.shared.settings.Setting.parentNot;
 
 import app.morphe.extension.music.patches.ChangeHeaderPatch.HeaderLogo;
 import app.morphe.extension.music.patches.ChangeStartPagePatch.StartPage;
+import app.morphe.extension.music.patches.CrossfadeManager.FadeCurve;
 import app.morphe.extension.shared.Logger;
 import app.morphe.extension.shared.settings.BooleanSetting;
 import app.morphe.extension.shared.settings.EnumSetting;
@@ -45,9 +46,12 @@ public class Settings extends SharedYouTubeSettings {
 
     // Crossfade
     public static final BooleanSetting CROSSFADE_ENABLED = new BooleanSetting("morphe_music_crossfade_enabled", TRUE);
+    public static final EnumSetting<FadeCurve> CROSSFADE_CURVE = new EnumSetting<>("morphe_music_crossfade_curve", FadeCurve.EQUAL_POWER);
     public static final BooleanSetting CROSSFADE_ADVANCED_MODE = new BooleanSetting("morphe_music_crossfade_advanced_mode", FALSE);
     public static final IntegerSetting CROSSFADE_DURATION = new IntegerSetting("morphe_music_crossfade_duration", 3, parentNot(CROSSFADE_ADVANCED_MODE));
     public static final IntegerSetting CROSSFADE_DURATION_MS = new IntegerSetting("morphe_music_crossfade_duration_ms", 3000, parent(CROSSFADE_ADVANCED_MODE));
+    public static final BooleanSetting CROSSFADE_ON_SKIP = new BooleanSetting("morphe_music_crossfade_on_skip", TRUE);
+    public static final BooleanSetting CROSSFADE_ON_AUTO_ADVANCE = new BooleanSetting("morphe_music_crossfade_on_auto_advance", TRUE);
     public static final BooleanSetting CROSSFADE_SESSION_CONTROL = new BooleanSetting("morphe_music_crossfade_session_control", TRUE);
     public static final IntegerSetting CROSSFADE_LONG_PRESS_DURATION = new IntegerSetting("morphe_music_crossfade_long_press_duration", 800);
 
