@@ -1,3 +1,10 @@
+# [1.23.0](https://github.com/MorpheApp/morphe-patches/compare/v1.22.0...v1.23.0) (2026-03-31)
+
+
+### Features
+
+* **YouTube Music - Track crossfade:** Add true crossfade between consecutive tracks with configurable duration, advanced millisecond mode, and session-scoped pause/resume via long-pressing the shuffle button. Credits to VazerOG for the original implementation.
+
 # [1.22.0](https://github.com/MorpheApp/morphe-patches/compare/v1.21.1...v1.22.0) (2026-03-28)
 
 
