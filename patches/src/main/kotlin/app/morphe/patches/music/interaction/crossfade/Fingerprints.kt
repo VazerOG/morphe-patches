@@ -26,3 +26,12 @@ internal object PlayVideoFingerprint : Fingerprint(
     returnType = "V",
     strings = listOf("playVideo", "MedialibPlayer.playVideo()"),
 )
+
+/**
+ * Matches the ExoPlayer implementation class (cpp) which extends bvm
+ * and implements ExoPlayer.  The string "ExoPlayerImpl" is used as a
+ * log tag and is unique to this class.
+ */
+internal object ExoPlayerImplFingerprint : Fingerprint(
+    strings = listOf("ExoPlayerImpl"),
+)
