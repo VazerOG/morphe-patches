@@ -138,6 +138,13 @@ val crossfadePatch = bytecodePatch(
     compatibleWith(COMPATIBILITY_YOUTUBE_MUSIC)
 
     execute {
+        // TODO: Fix up this patch
+        if (packageMetadata.versionName >= "9.00.00") {
+            Logger.getLogger(this::class.java.name).warning(
+                "\"Track crossfade\" does not yet work with YT Music 9.0+. Instead patch YT Music 8.x"
+            )
+        }
+
         fun allMethodsInHierarchy(
             startType: String,
         ): List<com.android.tools.smali.dexlib2.iface.Method> {
