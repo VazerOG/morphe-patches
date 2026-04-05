@@ -1,5 +1,6 @@
 package app.morphe.patches.music.interaction.crossfade
 
+import app.morphe.patcher.Fingerprint
 import app.morphe.patcher.extensions.InstructionExtensions.addInstructions
 import app.morphe.patcher.patch.bytecodePatch
 import app.morphe.patcher.util.proxy.mutableTypes.MutableClass
@@ -15,15 +16,17 @@ import app.morphe.patches.shared.misc.settings.preference.PreferenceScreenPrefer
 import app.morphe.patches.shared.misc.settings.preference.SwitchPreference
 import app.morphe.patches.shared.misc.settings.preference.TextPreference
 import app.morphe.util.containsLiteralInstruction
+import app.morphe.util.getReference
 import com.android.tools.smali.dexlib2.AccessFlags
 import com.android.tools.smali.dexlib2.Opcode
 import com.android.tools.smali.dexlib2.builder.MutableMethodImplementation
-import com.android.tools.smali.dexlib2.iface.instruction.ReferenceInstruction
 import com.android.tools.smali.dexlib2.iface.Field
+import com.android.tools.smali.dexlib2.iface.instruction.ReferenceInstruction
 import com.android.tools.smali.dexlib2.iface.reference.FieldReference
 import com.android.tools.smali.dexlib2.iface.reference.MethodReference
 import com.android.tools.smali.dexlib2.immutable.ImmutableMethod
 import com.android.tools.smali.dexlib2.immutable.ImmutableMethodParameter
+import java.util.logging.Logger
 
 private const val EXTENSION_CLASS_DESCRIPTOR =
     "Lapp/morphe/extension/music/patches/CrossfadeManager;"
@@ -284,19 +287,18 @@ val crossfadePatch = bytecodePatch(
             it.type == EXO_PLAYER_TYPE
         } ?: error("ExoPlayer field of type $EXO_PLAYER_TYPE not found on ${coordinatorClass.type}")
 
-        val playNextMethod = PlayNextInQueueFingerprint.method
-        val sessionFieldRef = playNextMethod.implementation!!.instructions
-            .filterIsInstance<ReferenceInstruction>()
-            .first { it.opcode == Opcode.IGET_OBJECT }
-            .reference as FieldReference
+        val sessionFieldRef = PlayNextInQueueFingerprint.instructionMatches.first()
+            .getInstruction<ReferenceInstruction>().getReference<FieldReference>()!!
         val sessionClass = mutableClassDefBy(sessionFieldRef.type)
 
         val factoryFieldRef = sessionClass.fields.first()
         val factoryClass = mutableClassDefBy(factoryFieldRef.type)
 
-        val factoryMethod = factoryClass.methods.singleOrNull { method ->
-            method.returnType == EXO_PLAYER_TYPE && method.parameterTypes.size == 3
-        } ?: error("Factory method returning $EXO_PLAYER_TYPE with 3 params not found on ${factoryClass.type}")
+        val factoryMethod = Fingerprint(
+            definingClass = factoryFieldRef.type,
+            returnType = EXO_PLAYER_TYPE,
+            parameters = listOf("L", "L", "I")
+        ).method
 
         // --- ExoPlayer impl class ---
         // Scan all classes to find the concrete class implementing ExoPlayer.

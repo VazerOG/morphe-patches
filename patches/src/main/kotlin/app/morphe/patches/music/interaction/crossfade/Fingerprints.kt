@@ -1,6 +1,8 @@
 package app.morphe.patches.music.interaction.crossfade
 
 import app.morphe.patcher.Fingerprint
+import app.morphe.patcher.opcode
+import com.android.tools.smali.dexlib2.Opcode
 
 internal object StopVideoFingerprint : Fingerprint(
     returnType = "V",
@@ -9,6 +11,9 @@ internal object StopVideoFingerprint : Fingerprint(
 
 internal object PlayNextInQueueFingerprint : Fingerprint(
     returnType = "V",
+    filters = listOf(
+        opcode(Opcode.IGET_OBJECT)
+    ),
     strings = listOf("gapless.seek.next", "playNextInQueue."),
 )
 
