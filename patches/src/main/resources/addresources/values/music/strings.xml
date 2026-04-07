@@ -41,6 +41,8 @@ Second \"item\" text"</string>
     <string name="morphe_music_hide_video_ads_summary_off">Video ads are shown</string>
 
     <!-- interaction.crossfade.crossfadePatch -->
+    <string name="morphe_music_crossfade_disclaimer_title">Supported versions</string>
+    <string name="morphe_music_crossfade_disclaimer_summary">"Crossfade is verified on YouTube Music 8.x. Version 9.x is not supported by this patch yet."</string>
     <string name="morphe_music_crossfade_screen_title">Crossfade</string>
     <string name="morphe_music_crossfade_screen_summary">Smoothly blend tracks into each other</string>
     <string name="morphe_music_crossfade_enabled_title">Enable crossfade</string>

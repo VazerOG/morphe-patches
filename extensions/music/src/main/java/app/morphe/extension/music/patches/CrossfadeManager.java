@@ -14,6 +14,7 @@ import android.widget.Toast;
 import android.annotation.SuppressLint;
 
 import java.lang.ref.WeakReference;
+import java.util.Iterator;
 
 import app.morphe.extension.music.settings.Settings;
 import app.morphe.extension.shared.Logger;
@@ -29,6 +30,13 @@ import app.morphe.extension.shared.Utils;
  * player to the new one so the subsequent loadVideo flow uses it.
  * Once the new track reaches STATE_READY we run a configurable
  * crossfade, then release the old player.
+ *
+ * Multi-player fade system: when a skip arrives during an active
+ * crossfade, the current incoming player is "demoted" to a quick
+ * fade-out, a fresh player is created for the next track, and the
+ * native loadVideo naturally loads onto it.  Multiple fade-out
+ * animations run concurrently via a dedicated fading loop, each
+ * player releasing when its volume reaches zero.
  *
  * Each obfuscated YTM class is accessed through a dedicated interface
  * whose bridge methods are injected at patch time (same pattern as YT
@@ -225,12 +233,18 @@ public class CrossfadeManager {
     private static final int REASON_DIRECTOR_RESET = 5;
     private static final long AUTO_ADVANCE_THRESHOLD_MS = 5000;
     private static final long MONITOR_POLL_MS = 100;
+    private static final int QUICK_FADE_MS = 400;
 
-    private static volatile ExoPlayerAccess oldPlayer = null;
     private static volatile SharedCallbackAccess activeSharedCallback = null;
     private static volatile ExoPlayerAccess crossfadeInPlayer = null;
-    private static volatile ExoPlayerAccess crossfadeOutPlayer = null;
+    private static volatile ExoPlayerAccess pendingInPlayer = null;
+    private static volatile ExoPlayerAccess pendingOutPlayer = null;
     private static volatile PlayerCoordinatorAccess activeCoordinator = null;
+    private static volatile float currentFadeInVolume = 0.0f;
+
+    private static final java.util.List<FadingPlayer> fadingOutPlayers =
+            java.util.Collections.synchronizedList(new java.util.ArrayList<>());
+    private static volatile boolean fadingLoopRunning = false;
 
     private static WeakReference<Object> lastAtadRef = new WeakReference<>(null);
     private static WeakReference<Object> lastNbaRef = new WeakReference<>(null);
@@ -241,6 +255,50 @@ public class CrossfadeManager {
     private static int playersReleased = 0;
     private static final java.util.List<WeakReference<View>> longPressRefs =
             new java.util.ArrayList<>();
+
+    /**
+     * Tracks a single player's fade-out animation.
+     * Supports both curve-based fades (original outgoing player)
+     * and linear fades (demoted incoming players during chained skips).
+     */
+    private static class FadingPlayer {
+        final ExoPlayerAccess player;
+        final float startVolume;
+        final long startTimeMs;
+        final long fadeDurationMs;
+        final FadeCurve curve;
+
+        /** Curve-based fade-out for the original outgoing player. */
+        FadingPlayer(ExoPlayerAccess player, long fadeDurationMs, FadeCurve curve) {
+            this.player = player;
+            this.startVolume = 1.0f;
+            this.startTimeMs = System.currentTimeMillis();
+            this.fadeDurationMs = fadeDurationMs;
+            this.curve = curve;
+        }
+
+        /** Linear fade-out from current volume for demoted incoming players. */
+        FadingPlayer(ExoPlayerAccess player, float startVolume, long fadeDurationMs) {
+            this.player = player;
+            this.startVolume = Math.max(0.0f, Math.min(1.0f, startVolume));
+            this.startTimeMs = System.currentTimeMillis();
+            this.fadeDurationMs = Math.max(50, fadeDurationMs);
+            this.curve = null;
+        }
+
+        float currentVolume() {
+            long elapsed = System.currentTimeMillis() - startTimeMs;
+            float t = Math.min(1.0f, (float) elapsed / fadeDurationMs);
+            if (curve != null) {
+                return curve.out(t);
+            }
+            return startVolume * (1.0f - t);
+        }
+
+        boolean isComplete() {
+            return System.currentTimeMillis() - startTimeMs >= fadeDurationMs;
+        }
+    }
 
     // ------------------------------------------------------------------ //
     //  Public hook: stopVideo (manual skip-next)                          //
@@ -254,6 +312,9 @@ public class CrossfadeManager {
         tryAttachLongPressHandler();
 
         if (crossfadeInProgress) {
+            if (reason == REASON_DIRECTOR_RESET) {
+                return handleChainedSkip(atadInstance);
+            }
             logDebug("stopVideo(" + reason + "): BLOCKED — crossfade in progress");
             return true;
         }
@@ -342,79 +403,13 @@ public class CrossfadeManager {
                 logInfo("Silent audio mode set BEFORE factory (video→audio, no nmi broadcast)");
             }
 
-            SessionAccess session = (SessionAccess) coordinator.patch_getSession();
-            if (session == null) {
-                logError("Coordinator session is null");
-                return false;
-            }
-
-            PlayerFactoryAccess factory = (PlayerFactoryAccess) session.patch_getFactory();
-            if (factory == null) {
-                logError("Session factory is null");
-                return false;
-            }
-
-            Object loadControl = coordinator.patch_getLoadControl();
-            if (loadControl == null) {
-                logError("Coordinator load control is null");
-                return false;
-            }
-
-            SharedStateAccess sharedState = (SharedStateAccess) coordinator.patch_getSharedState();
-            if (sharedState == null) {
-                logError("Coordinator shared state is null");
-                return false;
-            }
-
-            SharedCallbackAccess sharedCallback =
-                    (SharedCallbackAccess) coordinator.patch_getSharedCallback();
-            if (sharedCallback == null) {
-                logError("Coordinator shared callback is null");
-                return false;
-            }
-            activeSharedCallback = sharedCallback;
-
-            Object oldTimeline = sharedState.patch_getTimeline();
-            Object oldCqb = sharedCallback.patch_getCqb();
-            Object oldDlt = sharedCallback.patch_getDlt();
-            logDebug("Pre-factory shared state: cqb=" + (oldCqb != null)
-                    + " dlt=" + (oldDlt != null));
-            sharedState.patch_setTimeline(null);
-            sharedCallback.patch_setCqb(null);
-
-            ExoPlayerAccess newExo = createPlayerViaFactory(factory, coordinator, loadControl);
-            if (newExo == null) {
-                logError("Factory returned null — restoring and aborting");
-                sharedState.patch_setTimeline(oldTimeline);
-                sharedCallback.patch_setCqb(oldCqb);
-                return false;
-            }
-
-            Object postTimeline = sharedState.patch_getTimeline();
-            Object postCqb = sharedCallback.patch_getCqb();
-            Object postDlt = sharedCallback.patch_getDlt();
-            logDebug("Post-factory shared state: cqb=" + (postCqb != null)
-                    + " dlt=" + (postDlt != null)
-                    + " newExo=" + System.identityHashCode(newExo));
-            if (postTimeline == null) {
-                logError("Factory failed to set timeline — aborting");
-                sharedState.patch_setTimeline(oldTimeline);
-                sharedCallback.patch_setCqb(oldCqb);
-                return false;
-            }
-            if (postCqb == null) {
-                logError("Factory failed to set cqb — aborting");
-                sharedState.patch_setTimeline(oldTimeline);
-                sharedCallback.patch_setCqb(oldCqb);
-                return false;
-            }
+            ExoPlayerAccess newExo = createNewPlayer(coordinator);
+            if (newExo == null) return false;
 
             newExo.patch_setVolume(0.0f);
 
-            releaseOld();
-            oldPlayer = currentExo;
-            crossfadeOutPlayer = currentExo;
-            crossfadeInPlayer = newExo;
+            pendingOutPlayer = currentExo;
+            pendingInPlayer = newExo;
             activeCoordinator = coordinator;
             crossfadeInProgress = true;
 
@@ -429,20 +424,145 @@ public class CrossfadeManager {
 
             logInfo("Old player preserved (keeps playing), polling for new track ready"
                     + " — BLOCKING native stopVideo");
-            pollForNewTrackReady(newExo, currentExo);
+            pollForNewTrackReady(newExo);
 
             return true;
 
         } catch (Exception e) {
             logError("onBeforeStopVideo error", e);
-            releaseOld();
-            activeCoordinator = null;
-            crossfadeInProgress = false;
+            cleanupAllPlayers();
             if (audioModeWasForced) {
                 audioModeWasForced = false;
                 restoreVideoModeSilently();
             }
             return false;
+        }
+    }
+
+    /**
+     * Handles a skip-next that arrives while a crossfade is already in progress.
+     * Demotes the current incoming player to a quick fade-out, creates a new
+     * player, and swaps it onto the coordinator so the native loadVideo flow
+     * naturally loads the next track onto it.
+     */
+    private static boolean handleChainedSkip(Object atadInstance) {
+        logInfo("stopVideo(5): CHAINED SKIP — creating new player, deferring demotion until READY");
+
+        if (!isEnabled() || sessionPaused || getCrossfadeDurationMs() <= 0) {
+            logDebug("Chained skip: crossfade now disabled/paused — aborting crossfade");
+            abortCrossfadeNow();
+            return false;
+        }
+
+        try {
+            PlayerCoordinatorAccess coordinator = activeCoordinator;
+            if (coordinator == null) {
+                coordinator = getCoordinatorFromAtad(atadInstance);
+                if (coordinator == null) {
+                    logError("Chained skip: coordinator null — aborting");
+                    abortCrossfadeNow();
+                    return false;
+                }
+            }
+
+            ExoPlayerAccess oldPending = pendingInPlayer;
+            if (oldPending != null) {
+                logInfo("Chained skip: releasing previous pending player @"
+                        + System.identityHashCode(oldPending)
+                        + " (never reached READY)");
+                releasePlayer(oldPending);
+            }
+
+            ExoPlayerAccess newExo = createNewPlayer(coordinator);
+            if (newExo == null) {
+                logError("Chained skip: factory failed — aborting crossfade");
+                abortCrossfadeNow();
+                return false;
+            }
+
+            newExo.patch_setVolume(0.0f);
+            pendingInPlayer = newExo;
+            activeCoordinator = coordinator;
+
+            coordinator.patch_setExoPlayer(newExo);
+            logInfo("Chained skip: swapped coordinator → new player @"
+                    + System.identityHashCode(newExo)
+                    + " (current animation continues uninterrupted)");
+
+            VideoSurfaceAccess surface = (VideoSurfaceAccess) coordinator.patch_getVideoSurface();
+            if (surface != null) {
+                surface.patch_setPlayerReference(newExo);
+            }
+
+            pollForNewTrackReady(newExo);
+
+            return true;
+        } catch (Exception e) {
+            logError("handleChainedSkip error", e);
+            abortCrossfadeNow();
+            return false;
+        }
+    }
+
+    /**
+     * Creates a new ExoPlayer via the factory, handling shared state
+     * null-out and post-creation validation.
+     * Returns null on failure (caller should abort/fallback).
+     */
+    private static ExoPlayerAccess createNewPlayer(PlayerCoordinatorAccess coordinator) {
+        try {
+            SessionAccess session = (SessionAccess) coordinator.patch_getSession();
+            if (session == null) { logError("createNewPlayer: session null"); return null; }
+
+            PlayerFactoryAccess factory = (PlayerFactoryAccess) session.patch_getFactory();
+            if (factory == null) { logError("createNewPlayer: factory null"); return null; }
+
+            Object loadControl = coordinator.patch_getLoadControl();
+            if (loadControl == null) { logError("createNewPlayer: loadControl null"); return null; }
+
+            SharedStateAccess sharedState = (SharedStateAccess) coordinator.patch_getSharedState();
+            if (sharedState == null) { logError("createNewPlayer: sharedState null"); return null; }
+
+            SharedCallbackAccess sharedCallback =
+                    (SharedCallbackAccess) coordinator.patch_getSharedCallback();
+            if (sharedCallback == null) { logError("createNewPlayer: sharedCallback null"); return null; }
+            activeSharedCallback = sharedCallback;
+
+            Object oldTimeline = sharedState.patch_getTimeline();
+            Object oldCqb = sharedCallback.patch_getCqb();
+            logDebug("Pre-factory shared state: cqb=" + (oldCqb != null));
+            sharedState.patch_setTimeline(null);
+            sharedCallback.patch_setCqb(null);
+
+            ExoPlayerAccess newExo = createPlayerViaFactory(factory, coordinator, loadControl);
+            if (newExo == null) {
+                logError("Factory returned null — restoring");
+                sharedState.patch_setTimeline(oldTimeline);
+                sharedCallback.patch_setCqb(oldCqb);
+                return null;
+            }
+
+            Object postTimeline = sharedState.patch_getTimeline();
+            Object postCqb = sharedCallback.patch_getCqb();
+            logDebug("Post-factory shared state: cqb=" + (postCqb != null)
+                    + " newExo=" + System.identityHashCode(newExo));
+            if (postTimeline == null) {
+                logError("Factory failed to set timeline — aborting");
+                sharedState.patch_setTimeline(oldTimeline);
+                sharedCallback.patch_setCqb(oldCqb);
+                return null;
+            }
+            if (postCqb == null) {
+                logError("Factory failed to set cqb — aborting");
+                sharedState.patch_setTimeline(oldTimeline);
+                sharedCallback.patch_setCqb(oldCqb);
+                return null;
+            }
+
+            return newExo;
+        } catch (Exception e) {
+            logError("createNewPlayer error", e);
+            return null;
         }
     }
 
@@ -477,56 +597,13 @@ public class CrossfadeManager {
             logDebug("PlayNext: current player state=" + currentState
                     + " wasInVideo=" + wasInVideoMode);
 
-            SessionAccess session = (SessionAccess) coordinator.patch_getSession();
-            if (session == null) return;
-            PlayerFactoryAccess factory = (PlayerFactoryAccess) session.patch_getFactory();
-            if (factory == null) return;
-            Object loadControl = coordinator.patch_getLoadControl();
-            if (loadControl == null) return;
-
-            SharedStateAccess sharedState =
-                    (SharedStateAccess) coordinator.patch_getSharedState();
-            if (sharedState == null) return;
-            SharedCallbackAccess sharedCallback =
-                    (SharedCallbackAccess) coordinator.patch_getSharedCallback();
-            if (sharedCallback == null) return;
-            activeSharedCallback = sharedCallback;
-
-            Object oldTimeline = sharedState.patch_getTimeline();
-            Object oldCqb = sharedCallback.patch_getCqb();
-            sharedState.patch_setTimeline(null);
-            sharedCallback.patch_setCqb(null);
-
-            ExoPlayerAccess newExo = createPlayerViaFactory(factory, coordinator, loadControl);
-            if (newExo == null) {
-                sharedState.patch_setTimeline(oldTimeline);
-                sharedCallback.patch_setCqb(oldCqb);
-                return;
-            }
-
-            Object postTimeline = sharedState.patch_getTimeline();
-            Object postCqb = sharedCallback.patch_getCqb();
-            logDebug("PlayNext post-factory: timeline=" + (postTimeline != null)
-                    + " cqb=" + (postCqb != null));
-            if (postTimeline == null) {
-                logError("PlayNext: factory failed to set timeline — aborting");
-                sharedState.patch_setTimeline(oldTimeline);
-                sharedCallback.patch_setCqb(oldCqb);
-                return;
-            }
-            if (postCqb == null) {
-                logError("PlayNext: factory failed to set cqb — aborting");
-                sharedState.patch_setTimeline(oldTimeline);
-                sharedCallback.patch_setCqb(oldCqb);
-                return;
-            }
+            ExoPlayerAccess newExo = createNewPlayer(coordinator);
+            if (newExo == null) return;
 
             newExo.patch_setVolume(0.0f);
 
-            releaseOld();
-            oldPlayer = currentExo;
-            crossfadeOutPlayer = currentExo;
-            crossfadeInPlayer = newExo;
+            pendingOutPlayer = currentExo;
+            pendingInPlayer = newExo;
             activeCoordinator = coordinator;
             crossfadeInProgress = true;
 
@@ -546,13 +623,11 @@ public class CrossfadeManager {
             }
 
             logInfo("PlayNext: old player preserved, polling for new track ready");
-            pollForNewTrackReady(newExo, currentExo);
+            pollForNewTrackReady(newExo);
 
         } catch (Exception e) {
             logError("onBeforePlayNext error", e);
-            releaseOld();
-            activeCoordinator = null;
-            crossfadeInProgress = false;
+            cleanupAllPlayers();
             if (audioModeWasForced) {
                 audioModeWasForced = false;
                 restoreVideoModeSilently();
@@ -611,9 +686,7 @@ public class CrossfadeManager {
 
     private static int lastPollState = -1;
 
-    private static void pollForNewTrackReady(
-            final ExoPlayerAccess newPlayer,
-            final ExoPlayerAccess outPlayer) {
+    private static void pollForNewTrackReady(final ExoPlayerAccess newPlayer) {
         final long deadline = System.currentTimeMillis() + READY_TIMEOUT_MS;
         lastPollState = -1;
 
@@ -621,25 +694,23 @@ public class CrossfadeManager {
             @Override
             public void run() {
                 if (!crossfadeInProgress) return;
+                if (newPlayer != pendingInPlayer) return;
 
                 try {
                     int state = newPlayer.patch_getPlaybackState();
                     if (state == STATE_READY) {
-                        logInfo("New track READY — starting crossfade");
-                        animateCrossfade(outPlayer, newPlayer);
+                        logInfo("Pending track READY — promoting to crossfade");
+                        onPendingPlayerReady(newPlayer);
                         return;
                     }
 
                     if (state == 4) {
-                        logError("New player ENDED unexpectedly — aborting");
-                        releaseOld();
-                        activeCoordinator = null;
-                        crossfadeInProgress = false;
+                        logError("Pending player ENDED unexpectedly — aborting");
+                        cleanupAllPlayers();
                         if (audioModeWasForced) {
                             audioModeWasForced = false;
                             restoreVideoModeSilently();
                         }
-                        try { newPlayer.patch_setVolume(1.0f); } catch (Exception ignored) {}
                         return;
                     }
 
@@ -650,23 +721,18 @@ public class CrossfadeManager {
 
                     if (System.currentTimeMillis() > deadline) {
                         logError("Timeout waiting for new track");
-                        releaseOld();
-                        activeCoordinator = null;
-                        crossfadeInProgress = false;
+                        cleanupAllPlayers();
                         if (audioModeWasForced) {
                             audioModeWasForced = false;
                             restoreVideoModeSilently();
                         }
-                        try { newPlayer.patch_setVolume(1.0f); } catch (Exception ignored) {}
                         return;
                     }
 
                     mainHandler.postDelayed(this, READY_POLL_MS);
                 } catch (Exception e) {
                     logError("Poll error", e);
-                    releaseOld();
-                    activeCoordinator = null;
-                    crossfadeInProgress = false;
+                    cleanupAllPlayers();
                     if (audioModeWasForced) {
                         audioModeWasForced = false;
                         restoreVideoModeSilently();
@@ -674,6 +740,49 @@ public class CrossfadeManager {
                 }
             }
         }, READY_POLL_MS);
+    }
+
+    /**
+     * Called when a pending player reaches STATE_READY.
+     * Moves the outgoing player(s) to the fade-out list and
+     * promotes the pending player to the active crossfade-in role.
+     */
+    private static void onPendingPlayerReady(ExoPlayerAccess newPlayer) {
+        FadeCurve curve = Settings.CROSSFADE_CURVE.get();
+        long fadeDuration = getCrossfadeDurationMs();
+
+        ExoPlayerAccess outgoing = pendingOutPlayer;
+        if (outgoing != null) {
+            fadingOutPlayers.add(new FadingPlayer(outgoing, fadeDuration, curve));
+            pendingOutPlayer = null;
+            logInfo("Original outgoing player @" + System.identityHashCode(outgoing)
+                    + " → fade-out list (full crossfade, " + fadeDuration + "ms)");
+        }
+
+        ExoPlayerAccess prevIncoming = crossfadeInPlayer;
+        if (prevIncoming != null && prevIncoming != newPlayer) {
+            float vol = currentFadeInVolume;
+            long quickDuration = Math.max(200, (long) (QUICK_FADE_MS * vol));
+            if (vol > 0.01f) {
+                fadingOutPlayers.add(new FadingPlayer(prevIncoming, vol, quickDuration));
+                logInfo("Previous incoming player @"
+                        + System.identityHashCode(prevIncoming)
+                        + " → quick fade-out from " + String.format("%.2f", vol)
+                        + " over " + quickDuration + "ms");
+            } else {
+                releasePlayer(prevIncoming);
+                logInfo("Previous incoming player @"
+                        + System.identityHashCode(prevIncoming)
+                        + " → released (vol ≈ 0)");
+            }
+        }
+
+        crossfadeInPlayer = newPlayer;
+        pendingInPlayer = null;
+        currentFadeInVolume = 0.0f;
+
+        ensureFadingLoopRunning();
+        animateCrossfade(newPlayer);
     }
 
     // ------------------------------------------------------------------ //
@@ -778,53 +887,57 @@ public class CrossfadeManager {
         if (!crossfadeInProgress) return;
 
         ExoPlayerAccess inp = crossfadeInPlayer;
-        ExoPlayerAccess outp = crossfadeOutPlayer;
+        ExoPlayerAccess pending = pendingInPlayer;
+        ExoPlayerAccess pendOut = pendingOutPlayer;
         PlayerCoordinatorAccess coord = activeCoordinator;
 
-        boolean newPlayerReady = false;
+        ExoPlayerAccess bestPlayer = null;
+        boolean inpReady = false;
         if (inp != null) {
-            try { newPlayerReady = inp.patch_getPlaybackState() == STATE_READY; }
+            try { inpReady = inp.patch_getPlaybackState() == STATE_READY; }
+            catch (Exception ignored) {}
+        }
+        boolean pendingReady = false;
+        if (pending != null) {
+            try { pendingReady = pending.patch_getPlaybackState() == STATE_READY; }
             catch (Exception ignored) {}
         }
 
-        if (!newPlayerReady && outp != null && coord != null) {
-            logInfo("abortCrossfadeNow: new player not ready — restoring old player");
-            try {
-                coord.patch_setExoPlayer(outp);
-                VideoSurfaceAccess surface =
-                        (VideoSurfaceAccess) coord.patch_getVideoSurface();
-                if (surface != null) {
-                    surface.patch_setPlayerReference(outp);
-                }
-                logInfo("abortCrossfadeNow: coordinator restored to old player");
-            } catch (Exception e) {
-                logWarn("abortCrossfadeNow: restore failed: " + e.getMessage());
-            }
-            oldPlayer = null;
-            if (inp != null) {
-                try { inp.patch_setDltCallback(null); } catch (Exception ignored) {}
-                try { inp.patch_release(); } catch (Exception ignored) {}
-                playersReleased++;
-                logInfo("abortCrossfadeNow: released unused new player @"
-                        + System.identityHashCode(inp));
-            }
-        } else {
-            logInfo("abortCrossfadeNow: keeping new player (ready=" + newPlayerReady
-                    + ") — snapping volumes & releasing old");
-            if (inp != null) {
-                try { inp.patch_setVolume(1.0f); } catch (Exception ignored) {}
-                try { inp.patch_setPlayWhenReady(true); } catch (Exception ignored) {}
-            }
-            if (outp != null) {
-                try { outp.patch_setVolume(0.0f); } catch (Exception ignored) {}
-            }
-            releaseOld();
+        if (pendingReady) {
+            bestPlayer = pending;
+        } else if (inpReady) {
+            bestPlayer = inp;
+        } else if (pendOut != null) {
+            bestPlayer = pendOut;
         }
 
+        if (bestPlayer != null && coord != null) {
+            logInfo("abortCrossfadeNow: snapping to player @"
+                    + System.identityHashCode(bestPlayer));
+            try {
+                bestPlayer.patch_setVolume(1.0f);
+                bestPlayer.patch_setPlayWhenReady(true);
+                coord.patch_setExoPlayer(bestPlayer);
+                VideoSurfaceAccess surface =
+                        (VideoSurfaceAccess) coord.patch_getVideoSurface();
+                if (surface != null) surface.patch_setPlayerReference(bestPlayer);
+            } catch (Exception e) {
+                logWarn("abortCrossfadeNow: snap failed: " + e.getMessage());
+            }
+        }
+
+        if (inp != null && inp != bestPlayer) releasePlayer(inp);
+        if (pending != null && pending != bestPlayer) releasePlayer(pending);
+        if (pendOut != null && pendOut != bestPlayer) releasePlayer(pendOut);
+
+        releaseAllFadingPlayers();
+
         crossfadeInPlayer = null;
-        crossfadeOutPlayer = null;
+        pendingInPlayer = null;
+        pendingOutPlayer = null;
         activeCoordinator = null;
         crossfadeInProgress = false;
+        currentFadeInVolume = 0.0f;
 
         if (audioModeWasForced) {
             audioModeWasForced = false;
@@ -832,73 +945,72 @@ public class CrossfadeManager {
         }
     }
 
-    private static void animateCrossfade(
-            final ExoPlayerAccess outPlayer,
-            final ExoPlayerAccess inPlayer) {
-        if (outPlayer == null) {
-            logWarn("No old player to crossfade from");
-            crossfadeInProgress = false;
-            try { inPlayer.patch_setVolume(1.0f); } catch (Exception ignored) {}
-            return;
-        }
-
-        crossfadeOutPlayer = outPlayer;
-        crossfadeInPlayer = inPlayer;
-
+    /**
+     * Fade-in animation for the active crossfade-in player.
+     * Fade-outs are managed independently by the fading loop.
+     * Self-terminates if this player is superseded by a chained skip.
+     */
+    private static void animateCrossfade(final ExoPlayerAccess inPlayer) {
         try { inPlayer.patch_setPlayWhenReady(true); } catch (Exception ignored) {}
 
         final long startTime = System.currentTimeMillis();
         final long duration = getCrossfadeDurationMs();
 
-        logInfo("Crossfade animation started, duration=" + duration + "ms");
+        logInfo("Crossfade fade-in started for @" + System.identityHashCode(inPlayer)
+                + ", duration=" + duration + "ms"
+                + ", fading-out players=" + fadingOutPlayers.size());
 
         mainHandler.post(new Runnable() {
             @Override
             public void run() {
                 if (!crossfadeInProgress) return;
+                if (inPlayer != crossfadeInPlayer) return;
 
                 long elapsed = System.currentTimeMillis() - startTime;
                 float t = Math.min(1.0f, (float) elapsed / duration);
 
                 FadeCurve curve = Settings.CROSSFADE_CURVE.get();
-                float outVol = curve.out(t);
-                float inVol  = curve.in(t);
+                float inVol = curve.in(t);
+                currentFadeInVolume = inVol;
 
                 try {
-                    outPlayer.patch_setVolume(outVol);
                     inPlayer.patch_setVolume(inVol);
                     if (elapsed % 500 < TICK_MS) {
-                        int outState = outPlayer.patch_getPlaybackState();
                         int inState = inPlayer.patch_getPlaybackState();
                         logDebug(String.format(
-                                "t=%.2f outVol=%.2f(st=%d) inVol=%.2f(st=%d)",
-                                t, outVol, outState, inVol, inState));
+                                "fade-in: t=%.2f inVol=%.2f(st=%d) fadingOut=%d",
+                                t, inVol, inState, fadingOutPlayers.size()));
                     }
                 } catch (Exception e) {
-                    logError("Volume tick error", e);
+                    logError("Fade-in tick error", e);
                 }
 
                 if (t < 1.0f) {
                     mainHandler.postDelayed(this, TICK_MS);
                 } else {
-                    logInfo("Crossfade complete");
+                    logInfo("Fade-in complete for @" + System.identityHashCode(inPlayer));
                     inVideoMode = false;
-                    crossfadeInPlayer = null;
-                    crossfadeOutPlayer = null;
-                    activeCoordinator = null;
+                    currentFadeInVolume = 1.0f;
                     try { inPlayer.patch_setVolume(1.0f); } catch (Exception ignored) {}
-                    releaseOld();
-                    crossfadeInProgress = false;
 
-                    if (audioModeWasForced) {
-                        audioModeWasForced = false;
-                        mainHandler.post(() -> {
-                            if (crossfadeInProgress) return;
-                            restoreVideoModeSilently();
-                        });
+                    if (pendingInPlayer == null) {
+                        crossfadeInProgress = false;
+                        crossfadeInPlayer = null;
+                        activeCoordinator = null;
+
+                        if (audioModeWasForced) {
+                            audioModeWasForced = false;
+                            mainHandler.post(() -> {
+                                if (crossfadeInProgress) return;
+                                restoreVideoModeSilently();
+                            });
+                        }
+
+                        startAutoAdvanceMonitor();
+                    } else {
+                        logDebug("Fade-in complete but pending player exists — "
+                                + "waiting for it to reach READY");
                     }
-
-                    startAutoAdvanceMonitor();
                 }
             }
         });
@@ -1008,16 +1120,14 @@ public class CrossfadeManager {
     }
 
     // ------------------------------------------------------------------ //
-    //  Old player lifecycle                                               //
+    //  Player lifecycle — release and fading loop                         //
     // ------------------------------------------------------------------ //
 
-    private static void releaseOld() {
-        ExoPlayerAccess p = oldPlayer;
-        oldPlayer = null;
+    private static void releasePlayer(ExoPlayerAccess p) {
         if (p == null) return;
 
         playersReleased++;
-        logInfo("releaseOld: @" + System.identityHashCode(p)
+        logInfo("releasePlayer: @" + System.identityHashCode(p)
                 + " [created=" + playersCreated + " released=" + playersReleased
                 + " outstanding=" + (playersCreated - playersReleased) + "]");
 
@@ -1028,14 +1138,12 @@ public class CrossfadeManager {
             savedDlt = callback.patch_getDlt();
         }
 
-        try {
-            p.patch_setDltCallback(null);
-        } catch (Exception ignored) {}
+        try { p.patch_setDltCallback(null); } catch (Exception ignored) {}
 
         try {
             p.patch_release();
         } catch (Exception e) {
-            logDebug("releaseOld: release() threw (expected after dlt null): " + e.getMessage());
+            logDebug("releasePlayer: release() threw: " + e.getMessage());
         }
 
         if (callback != null) {
@@ -1043,12 +1151,76 @@ public class CrossfadeManager {
             Object postDlt = callback.patch_getDlt();
             if (savedCqb != null && postCqb == null) {
                 callback.patch_setCqb(savedCqb);
-                logDebug("releaseOld: restored shared cqb");
+                logDebug("releasePlayer: restored shared cqb");
             }
             if (savedDlt != null && postDlt == null) {
                 callback.patch_setDlt(savedDlt);
-                logDebug("releaseOld: restored shared dlt");
+                logDebug("releasePlayer: restored shared dlt");
             }
+        }
+    }
+
+    private static void releaseAllFadingPlayers() {
+        synchronized (fadingOutPlayers) {
+            for (FadingPlayer fp : fadingOutPlayers) {
+                try { fp.player.patch_setVolume(0.0f); } catch (Exception ignored) {}
+                releasePlayer(fp.player);
+            }
+            fadingOutPlayers.clear();
+        }
+        fadingLoopRunning = false;
+    }
+
+    /**
+     * Emergency cleanup: releases all tracked players and resets state.
+     * Used on errors and when crossfade is disabled/paused.
+     */
+    private static void cleanupAllPlayers() {
+        releaseAllFadingPlayers();
+        ExoPlayerAccess pi = pendingInPlayer;
+        if (pi != null) { releasePlayer(pi); pendingInPlayer = null; }
+        ExoPlayerAccess po = pendingOutPlayer;
+        if (po != null) { releasePlayer(po); pendingOutPlayer = null; }
+        crossfadeInPlayer = null;
+        activeCoordinator = null;
+        crossfadeInProgress = false;
+        currentFadeInVolume = 0.0f;
+    }
+
+    /**
+     * Starts the independent fading loop if not already running.
+     * The loop ticks all fade-out animations and releases players
+     * when their volume reaches zero.
+     */
+    private static void ensureFadingLoopRunning() {
+        if (fadingLoopRunning) return;
+        if (fadingOutPlayers.isEmpty()) return;
+        fadingLoopRunning = true;
+        mainHandler.post(CrossfadeManager::tickFadingLoop);
+    }
+
+    private static void tickFadingLoop() {
+        synchronized (fadingOutPlayers) {
+            Iterator<FadingPlayer> it = fadingOutPlayers.iterator();
+            while (it.hasNext()) {
+                FadingPlayer fp = it.next();
+                float vol = fp.currentVolume();
+                try { fp.player.patch_setVolume(Math.max(0.0f, vol)); }
+                catch (Exception ignored) {}
+
+                if (fp.isComplete()) {
+                    try { fp.player.patch_setVolume(0.0f); } catch (Exception ignored) {}
+                    releasePlayer(fp.player);
+                    it.remove();
+                }
+            }
+        }
+
+        if (!fadingOutPlayers.isEmpty()) {
+            mainHandler.postDelayed(CrossfadeManager::tickFadingLoop, TICK_MS);
+        } else {
+            fadingLoopRunning = false;
+            logDebug("Fading loop stopped — all fade-outs complete");
         }
     }
 
