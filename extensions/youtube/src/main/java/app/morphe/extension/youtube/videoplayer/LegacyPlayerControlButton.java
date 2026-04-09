@@ -10,6 +10,8 @@
 
 package app.morphe.extension.youtube.videoplayer;
 
+import static app.morphe.extension.youtube.patches.LegacyPlayerControlsPatch.RESTORE_OLD_PLAYER_BUTTONS;
+
 import android.graphics.drawable.AnimatedVectorDrawable;
 import android.graphics.drawable.Drawable;
 import android.view.View;
@@ -25,14 +27,11 @@ import app.morphe.extension.shared.Logger;
 import app.morphe.extension.shared.ResourceType;
 import app.morphe.extension.shared.ResourceUtils;
 import app.morphe.extension.shared.Utils;
-import app.morphe.extension.youtube.settings.Settings;
 import app.morphe.extension.youtube.shared.PlayerControlsVisibility;
 import app.morphe.extension.youtube.shared.PlayerType;
 import kotlin.Unit;
 
 public class LegacyPlayerControlButton {
-
-    public static final boolean RESTORE_OLD_PLAYER_BUTTONS = Settings.RESTORE_OLD_PLAYER_BUTTONS.get();
 
     public interface PlayerControlButtonStatus {
         /**
@@ -41,16 +40,21 @@ public class LegacyPlayerControlButton {
         boolean buttonEnabled();
     }
 
-    public static final int fadeInDuration;
+    public static final int buttonWidth = (int) ResourceUtils.getDimension("controls_overlay_action_button_size");
+    public static final int fadeInDuration = ResourceUtils.getInteger("fade_duration_fast");
+    private static final int fadeOutDuration = ResourceUtils.getInteger("fade_duration_scheduled");
 
-    static {
-        fadeInDuration = ResourceUtils.getInteger("fade_duration_fast");
+    /**
+     * Number of Morphe legacy upper buttons that are enabled.
+     */
+    private static int totalUpperButtonCount;
+
+    public static void incrementUpperButtonCount() {
+        totalUpperButtonCount++;
     }
 
-    private static final int fadeOutDuration;
-
-    static {
-        fadeOutDuration = ResourceUtils.getInteger("fade_duration_scheduled");
+    public static int getTotalUpperButtonCount() {
+        return totalUpperButtonCount;
     }
 
     private final WeakReference<View> containerRef;

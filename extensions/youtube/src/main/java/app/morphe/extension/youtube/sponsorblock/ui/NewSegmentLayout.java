@@ -2,8 +2,8 @@ package app.morphe.extension.youtube.sponsorblock.ui;
 
 import static app.morphe.extension.shared.ResourceUtils.getColor;
 import static app.morphe.extension.shared.ResourceUtils.getDimensionPixelSize;
+import static app.morphe.extension.youtube.patches.LegacyPlayerControlsPatch.RESTORE_OLD_PLAYER_BUTTONS;
 import static app.morphe.extension.youtube.sponsorblock.ui.SkipSponsorButton.SB_BUTTON_EXTRA_VERTICAL_PADDING;
-import static app.morphe.extension.youtube.videoplayer.LegacyPlayerControlButton.RESTORE_OLD_PLAYER_BUTTONS;
 
 import android.content.Context;
 import android.content.res.ColorStateList;

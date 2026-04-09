@@ -15,11 +15,11 @@ import static app.morphe.extension.shared.settings.preference.CustomDialogListPr
 import static app.morphe.extension.shared.settings.preference.CustomDialogListPreference.ID_MORPHE_CHECK_ICON_PLACEHOLDER;
 import static app.morphe.extension.shared.settings.preference.CustomDialogListPreference.ID_MORPHE_ITEM_TEXT;
 import static app.morphe.extension.shared.settings.preference.CustomDialogListPreference.LAYOUT_MORPHE_CUSTOM_LIST_ITEM_CHECKED;
+import static app.morphe.extension.youtube.patches.LegacyPlayerControlsPatch.RESTORE_OLD_PLAYER_BUTTONS;
 import static app.morphe.extension.youtube.patches.VideoInformation.AUTOMATIC_VIDEO_QUALITY_VALUE;
 import static app.morphe.extension.youtube.patches.VideoInformation.isPremiumVideoQuality;
 import static app.morphe.extension.youtube.videoplayer.LegacyPlayerControlButton.fadeInDuration;
 import static app.morphe.extension.youtube.videoplayer.LegacyPlayerControlButton.getDialogBackgroundColor;
-import static app.morphe.extension.youtube.videoplayer.PlayerOverlayButton.RESTORE_OLD_PLAYER_BUTTONS;
 
 import android.content.Context;
 import android.text.Spannable;
@@ -104,7 +104,7 @@ public class VideoQualityDialogButton {
      */
     public static void initializeLegacyButton(View controlsView) {
         try {
-            if (!PlayerOverlayButton.RESTORE_OLD_PLAYER_BUTTONS) {
+            if (!RESTORE_OLD_PLAYER_BUTTONS) {
                 return;
             }
 

@@ -11,7 +11,7 @@
 package app.morphe.extension.youtube.videoplayer;
 
 import static app.morphe.extension.shared.StringRef.str;
-import static app.morphe.extension.youtube.videoplayer.LegacyPlayerControlButton.RESTORE_OLD_PLAYER_BUTTONS;
+import static app.morphe.extension.youtube.patches.LegacyPlayerControlsPatch.RESTORE_OLD_PLAYER_BUTTONS;
 
 import android.view.View;
 import android.widget.ImageView;
@@ -26,6 +26,13 @@ import app.morphe.extension.youtube.settings.Settings;
 
 @SuppressWarnings("unused")
 public class LoopVideoButton {
+
+    static {
+        if (Settings.LOOP_VIDEO_BUTTON.get()) {
+            LegacyPlayerControlButton.incrementUpperButtonCount();
+        }
+    }
+
     @Nullable
     private static LegacyPlayerControlButton legacy;
 

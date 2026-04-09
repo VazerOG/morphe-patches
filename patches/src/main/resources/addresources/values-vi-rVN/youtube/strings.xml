@@ -37,9 +37,9 @@ Second \"item\" text"</string>
   <string name="morphe_shorts_disable_background_playback_summary_on">Phát nền cho Shorts đã tắt</string>
   <string name="morphe_shorts_disable_background_playback_summary_off">Phát nền cho Shorts đã bật</string>
   <!-- misc.debugging.enableDebuggingPatch -->
-  <string name="morphe_debug_protobuffer_title">Bộ đệm giao thức nhật ký</string>
-  <string name="morphe_debug_protobuffer_summary_on">Ghi nhật ký gỡ lỗi bao gồm thông tin bộ đệm nguyên mẫu</string>
-  <string name="morphe_debug_protobuffer_summary_off">Ghi nhật ký gỡ lỗi mà không có thông tin bộ đệm nguyên mẫu</string>
+  <string name="morphe_debug_protobuffer_title">Ghi nhật ký gỡ lỗi (Protocol Buffer)</string>
+  <string name="morphe_debug_protobuffer_summary_on">Nhật ký gỡ lỗi chứa cả dữ liệu protobuf</string>
+  <string name="morphe_debug_protobuffer_summary_off">Nhật ký gỡ lỗi không chứa dữ liệu protobuf</string>
   <string name="morphe_debug_protobuffer_user_dialog_message">"Bật cài đặt này sẽ ghi lại dữ liệu bố cục bổ sung, bao gồm cả văn bản trên màn hình cho một số thành phần giao diện người dùng.
 
 Điều này có thể giúp xác định các thành phần khi tạo bộ lọc tùy chỉnh.
@@ -51,13 +51,13 @@ Tuy nhiên, bật tính năng này cũng sẽ ghi lại một số dữ liệu n
   <string name="morphe_disable_layout_updates_summary_off">Giao diện sẽ được máy chủ cập nhật</string>
   <string name="morphe_disable_layout_updates_user_dialog_message">"Giao diện ứng dụng sẽ trở về như lúc mới cài đặt.
 
-Một số bố cục do máy chủ áp dụng có thể không quay trở lại hoàn toàn.
+Một số thay đổi từ phía máy chủ có thể không được hoàn tác.
 
-Thay đổi bao gồm:
-• Một số mục trong menu tùy chọn có thể không hoạt động.
+Ví dụ:
+• Một số mục trong menu tùy chọn của trình phát (hoặc các cài đặt liên quan) có thể không dùng được hoặc không ẩn được.
 • Không có hiệu ứng số cuộn.
 • Thẻ Thư viện có thể hiện lại.
-• Phần âm nhạc trong mô tả video có thể không hoạt động.
+• Phần âm nhạc trong mô tả video có thể bị lỗi.
 • Nút chuyển đổi tài khoản có thể biến mất trong thẻ Thư viện."</string>
   <!-- layout.hide.general.hideLayoutComponentsPatch -->
   <string name="morphe_hide_creator_store_shelf_title">Ẩn kệ cửa hàng của nhà sáng tạo</string>
@@ -120,6 +120,9 @@ Thay đổi bao gồm:
   <string name="morphe_hide_playables_title">Ẩn Chơi game trên Youtube</string>
   <string name="morphe_hide_playables_summary_on">Chơi game đã bị ẩn</string>
   <string name="morphe_hide_playables_summary_off">Chơi game được hiển thị</string>
+  <string name="morphe_hide_search_term_thumbnails_title">Ẩn hình thu nhỏ của từ khóa tìm kiếm</string>
+  <string name="morphe_hide_search_term_thumbnails_summary_on">Hình thu nhỏ của từ khóa tìm kiếm đã bị ẩn</string>
+  <string name="morphe_hide_search_term_thumbnails_summary_off">Hình thu nhỏ của từ khóa tìm kiếm được hiển thị</string>
   <!-- 'Show more' should be translated using the same localized wording YouTube displays for the button.
           This button usually appears when searching for a YouTube creator. -->
   <string name="morphe_hide_show_more_button_title">Ẩn nút \'Hiện thêm\'</string>
@@ -500,6 +503,29 @@ Vui lòng kiểm tra lại tên gói và đảm bảo ứng dụng đã được
   <string name="morphe_loop_video_button_summary_off">Nút cho video lặp lại không được hiển thị</string>
   <string name="morphe_loop_video_button_toast_on">Lặp lại video đang bật</string>
   <string name="morphe_loop_video_button_toast_off">Lặp lại video đang tắt</string>
+  <!-- interaction.playall.playAllButtonPatch -->
+  <string name="morphe_play_all_button_title">Hiện nút phát tất cả</string>
+  <string name="morphe_play_all_button_summary_on">"Nút phát tất cả đã được hiển thị
+Bấm để tạo danh sách phát gồm tất cả video trên kênh
+Bấm giữ để hoàn tác
+
+Lưu ý: Có thể không hoạt động trên video phát trực tiếp"</string>
+  <string name="morphe_play_all_button_summary_off">Nút phát tất cả không được hiển thị</string>
+  <string name="morphe_play_all_button_type_title">Chế độ tạo danh sách phát</string>
+  <string name="morphe_play_all_button_type_entry_0">Tất cả nội dung (Theo thời gian, cũ nhất)</string>
+  <string name="morphe_play_all_button_type_entry_1">Tất cả nội dung (Theo thời gian)</string>
+  <string name="morphe_play_all_button_type_entry_2">Tất cả nội dung (Theo độ phổ biến)</string>
+  <string name="morphe_play_all_button_type_entry_3">Chỉ video (Theo thời gian)</string>
+  <string name="morphe_play_all_button_type_entry_4">Chỉ video (Theo độ phổ biến)</string>
+  <string name="morphe_play_all_button_type_entry_5">Chỉ Shorts (Theo thời gian)</string>
+  <string name="morphe_play_all_button_type_entry_6">Chỉ Shorts (Theo độ phổ biến)</string>
+  <string name="morphe_play_all_button_type_entry_7">Chỉ video phát trực tiếp (Theo thời gian)</string>
+  <string name="morphe_play_all_button_type_entry_8">Chỉ video phát trực tiếp (Theo độ phổ biến)</string>
+  <string name="morphe_play_all_button_type_entry_9">Nội dung dành cho tất cả mọi người</string>
+  <string name="morphe_play_all_button_type_entry_10">Video chỉ dành cho hội viên</string>
+  <string name="morphe_play_all_button_type_entry_11">Video ngắn chỉ dành cho hội viên</string>
+  <string name="morphe_play_all_button_type_entry_12">Video phát trực tiếp chỉ dành cho hội viên</string>
+  <string name="morphe_play_all_button_not_available_toast">Không thể tạo danh sách phát do không khớp ID kênh</string>
   <!-- interaction.reload.reloadVideoPatch -->
   <string name="morphe_reload_video_title">Hiện nút tải lại video</string>
   <string name="morphe_reload_video_summary_on">Nút tải lại video đã được hiển thị</string>
@@ -509,6 +535,12 @@ Vui lòng kiểm tra lại tên gói và đảm bảo ứng dụng đã được
   <string name="morphe_disable_precise_seeking_gesture_title">Tắt cử chỉ tua chính xác</string>
   <string name="morphe_disable_precise_seeking_gesture_summary_on">Cử chỉ đã tắt</string>
   <string name="morphe_disable_precise_seeking_gesture_summary_off">Cử chỉ đã bật</string>
+  <!-- interaction.seekbar.livestreamDvrPatch -->
+  <string name="morphe_livestream_dvr_title">Bật DVR phát trực tiếp</string>
+  <string name="morphe_livestream_dvr_summary_on">Cho phép tua trên tất cả các phiên phát trực tiếp</string>
+  <string name="morphe_livestream_dvr_summary_off">Không được tua trên tất cả các phiên phát trực tiếp</string>
+  <!-- 'Spoof video streams' should be the same translation used for 'morphe_spoof_video_streams_screen_title'. -->
+  <string name="morphe_livestream_dvr_user_dialog_message">Việc bật tính năng này có thể gây ra hành vi tìm kiếm livestream không mong muốn nếu \'Spoof video streams\' không được bật.</string>
   <!-- interaction.seekbar.enableSlideToSeekPatch -->
   <string name="morphe_slide_to_seek_title">Bật vuốt để tua</string>
   <string name="morphe_slide_to_seek_summary_on">Vuốt để tua đã được bật</string>
@@ -720,8 +752,8 @@ Cookie sẽ được tự động lưu nếu hợp lệ"</string>
   <string name="morphe_navigation_bar_animations_summary_on">Chuyển điều hướng sẽ có hiệu ứng</string>
   <string name="morphe_navigation_bar_animations_summary_off">Chuyển điều hướng không có hiệu ứng</string>
   <string name="morphe_disable_auto_hide_navigation_bar_title">Tắt tự động ẩn thanh điều hướng</string>
-  <string name="morphe_disable_auto_hide_navigation_bar_summary_on">Thanh điều hướng sẽ không ẩn khi bạn lướt trang video</string>
-  <string name="morphe_disable_auto_hide_navigation_bar_summary_off">Thanh điều hướng sẽ ẩn khi bạn lướt trang video</string>
+  <string name="morphe_disable_auto_hide_navigation_bar_summary_on">Thanh điều hướng sẽ không bị ẩn trong khi bạn đang lướt trang video</string>
+  <string name="morphe_disable_auto_hide_navigation_bar_summary_off">Thanh điều hướng có thể sẽ bị ẩn trong khi bạn đang lướt trang video</string>
   <string name="morphe_disable_translucent_status_bar_title">Vô hiệu hóa thanh trạng thái trong suốt</string>
   <string name="morphe_disable_translucent_status_bar_summary_on">Thanh trạng thái sẽ không còn trong suốt</string>
   <string name="morphe_disable_translucent_status_bar_summary_off">Thanh trạng thái sẽ trở nên mờ hoặc trong suốt</string>
@@ -1417,12 +1449,6 @@ Hạn chế: Nút quay lại trên thanh công cụ có thể không hoạt đ�
   <string name="morphe_miniplayer_disable_rounded_corners_title">Tắt bo tròn góc</string>
   <string name="morphe_miniplayer_disable_rounded_corners_summary_on">Góc vuông</string>
   <string name="morphe_miniplayer_disable_rounded_corners_summary_off">Góc được bo tròn</string>
-  <string name="morphe_miniplayer_double_tap_action_title">Bật chạm hai lần và chụm để thay đổi kích thước</string>
-  <string name="morphe_miniplayer_double_tap_action_summary_on">"Thao tác chạm hai lần và chụm để thay đổi kích thước đã được bật
-
-• Chạm hai lần để tăng kích thước trình phát thu nhỏ
-• Chạm hai lần nữa để khôi phục kích thước ban đầu"</string>
-  <string name="morphe_miniplayer_double_tap_action_summary_off">Thao tác chạm hai lần và chụm để thay đổi kích thước đã tắt</string>
   <string name="morphe_miniplayer_disable_drag_and_drop_title">Tắt kéo và thả</string>
   <string name="morphe_miniplayer_disable_drag_and_drop_summary_on">Kéo và thả đã tắt</string>
   <string name="morphe_miniplayer_disable_drag_and_drop_summary_off">"Kéo và thả đã bật
@@ -1436,11 +1462,6 @@ Trình phát thu nhỏ có thể được kéo ra mép màn hình sang bên trá
   <string name="morphe_miniplayer_hide_overlay_buttons_title">Ẩn nút lớp phủ</string>
   <string name="morphe_miniplayer_hide_overlay_buttons_summary_on">Các nút lớp phủ đã bị ẩn</string>
   <string name="morphe_miniplayer_hide_overlay_buttons_summary_off">Các nút lớp phủ được hiển thị</string>
-  <string name="morphe_miniplayer_hide_overlay_buttons_legacy_title">Ẩn các nút mở rộng và đóng</string>
-  <string name="morphe_miniplayer_hide_overlay_buttons_legacy_summary_on">"Các nút đã bị ẩn
-
-Vuốt để mở rộng hoặc đóng"</string>
-  <string name="morphe_miniplayer_hide_overlay_buttons_legacy_summary_off">Các nút mở rộng và đóng được hiển thị</string>
   <string name="morphe_miniplayer_hide_subtext_title">Ẩn văn bản phụ</string>
   <string name="morphe_miniplayer_hide_subtext_summary_on">Văn bản phụ đã bị ẩn</string>
   <string name="morphe_miniplayer_hide_subtext_summary_off">Văn bản phụ được hiển thị</string>
@@ -1628,6 +1649,14 @@ Hạn chế:
 • Phát video sẽ sử dụng nhiều dữ liệu internet hơn VP9 hoặc AV1
 • Video HDR sẽ không sử dụng AVC
 • Một số thiết bị không thể buộc sử dụng AVC"</string>
+  <!-- 'Spoof video streams' should be the same translation used for 'morphe_spoof_video_streams_screen_title'. -->
+  <string name="morphe_force_avc_codec_not_available">Để dùng tính năng này, hãy đổi \'Giả mạo luồng phát video\' thành Android VR hoặc Android Studio</string>
+  <!-- interaction.seekbar.expandLivestreamDvrDurationPatch -->
+  <string name="morphe_expand_livestream_dvr_duration_title">Mở rộng thời lượng DVR phát trực tiếp</string>
+  <string name="morphe_expand_livestream_dvr_duration_summary_on">Thời lượng DVR phát trực tiếp đã được mở rộng lên đến 7 ngày</string>
+  <string name="morphe_expand_livestream_dvr_duration_summary_off">Thời lượng DVR phát trực tiếp bị giới hạn ở cài đặt mặc định của máy chủ</string>
+  <!-- 'Spoof video streams' should be the same translation used for 'morphe_spoof_video_streams_screen_title'. -->
+  <string name="morphe_expand_livestream_dvr_duration_user_dialog_message">Cài đặt này có thể gây ra hành vi không mong muốn nếu \'Spoof video streams\' chưa được bật.</string>
   <!-- video.quality.advancedVideoQualityMenuPatch -->
   <string name="morphe_advanced_video_quality_menu_title">Hiện menu chất lượng video nâng cao</string>
   <string name="morphe_advanced_video_quality_menu_summary_on">Menu chất lượng video nâng cao được hiển thị</string>

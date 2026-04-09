@@ -10,6 +10,8 @@
 
 package app.morphe.extension.youtube.videoplayer;
 
+import static app.morphe.extension.youtube.patches.LegacyPlayerControlsPatch.RESTORE_OLD_PLAYER_BUTTONS;
+
 import android.view.View;
 import android.widget.TextView;
 
@@ -43,7 +45,7 @@ public class PlaybackSpeedDialogButton {
      */
     public static void initializeButton(View controlsView) {
         try {
-            if (PlayerOverlayButton.RESTORE_OLD_PLAYER_BUTTONS || !Settings.PLAYBACK_SPEED_DIALOG_BUTTON.get()) {
+            if (RESTORE_OLD_PLAYER_BUTTONS || !Settings.PLAYBACK_SPEED_DIALOG_BUTTON.get()) {
                 return;
             }
 
@@ -62,7 +64,7 @@ public class PlaybackSpeedDialogButton {
 
     public static void initializeLegacyButton(View controlsView) {
         try {
-            if (!PlayerOverlayButton.RESTORE_OLD_PLAYER_BUTTONS) {
+            if (!RESTORE_OLD_PLAYER_BUTTONS) {
                 return;
             }
 
