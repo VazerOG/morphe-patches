@@ -1,7 +1,9 @@
 package app.morphe.patches.music.interaction.crossfade
 
 import app.morphe.patcher.Fingerprint
+import app.morphe.patcher.opcode
 import com.android.tools.smali.dexlib2.AccessFlags
+import com.android.tools.smali.dexlib2.Opcode
 
 /**
  * Crossfade discovery uses three tiers of fingerprints:
@@ -29,6 +31,9 @@ internal object StopVideoFingerprint : Fingerprint(
 /** Inner coordinator (athu): `playNextInQueue` / gapless. */
 internal object PlayNextInQueueFingerprint : Fingerprint(
     returnType = "V",
+    filters = listOf(
+        opcode(Opcode.IGET_OBJECT),
+    ),
     strings = listOf("gapless.seek.next", "playNextInQueue."),
 )
 
