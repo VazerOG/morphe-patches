@@ -24,20 +24,18 @@ import app.morphe.patcher.patch.bytecodePatch
 import app.morphe.patcher.string
 import app.morphe.patcher.util.proxy.mutableTypes.MutableMethod
 import app.morphe.patcher.util.proxy.mutableTypes.MutableMethod.Companion.toMutable
+import app.morphe.patches.youtube.misc.extension.sharedExtensionPatch
 import app.morphe.patches.youtube.misc.fix.backtoexitgesture.fixBackToExitGesturePatch
 import app.morphe.patches.youtube.misc.fix.verticalscroll.fixVerticalScrollPatch
-import app.morphe.patches.youtube.misc.extension.sharedExtensionPatch
 import app.morphe.patches.youtube.misc.litho.context.EXTENSION_CONTEXT_INTERFACE
 import app.morphe.patches.youtube.misc.litho.context.conversionContextPatch
-import app.morphe.patches.youtube.misc.playservice.is_19_25_or_greater
-import app.morphe.patches.youtube.misc.playservice.is_20_05_or_greater
 import app.morphe.patches.youtube.misc.playservice.is_20_22_or_greater
+import app.morphe.patches.youtube.misc.playservice.is_21_15_or_greater
 import app.morphe.patches.youtube.misc.playservice.versionCheckPatch
 import app.morphe.util.addInstructionsAtControlFlowLabel
 import app.morphe.util.getFreeRegisterProvider
 import app.morphe.util.getReference
 import app.morphe.util.insertLiteralOverride
-import app.morphe.util.returnLate
 import com.android.tools.smali.dexlib2.AccessFlags
 import com.android.tools.smali.dexlib2.Opcode
 import com.android.tools.smali.dexlib2.builder.MutableMethodImplementation
@@ -329,23 +327,16 @@ val lithoFilterPatch = bytecodePatch(
 
         // region A/B test of new Litho native code.
 
-        // Turn off native code that handles litho component names. If this feature is on then nearly
-        // all litho components have a null name and identifier/path filtering is completely broken.
-        //
-        // Flag was removed in 20.05. It appears a new flag might be used instead (45660109L),
-        // but if the flag is forced on then litho filtering still works correctly.
-        if (is_19_25_or_greater && !is_20_05_or_greater) {
-            LithoComponentNameUpbFeatureFlagFingerprint.method.returnLate(false)
-        }
-
         // Turn off a feature flag that enables native code of protobuf parsing (Upb protobuf).
-        LithoConverterBufferUpbFeatureFlagFingerprint.let {
-            // 20.22 the flag is still enabled in one location, but what it does is not known.
-            // Disable it anyway.
-            it.method.insertLiteralOverride(
-                it.instructionMatches.first().index,
-                false
-            )
+        if (!is_21_15_or_greater) {
+            LithoConverterBufferUpbFeatureFlagFingerprint.let {
+                // 20.22 the flag is still enabled in one location, but what it does is not known.
+                // Disable it anyway. Flag was removed in 21.15+
+                it.method.insertLiteralOverride(
+                    it.instructionMatches.first().index,
+                    false
+                )
+            }
         }
 
         // endregion
