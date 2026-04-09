@@ -26,14 +26,6 @@
 
 ### Features
 
-* **YouTube Music - Track crossfade:** Add true dual-player crossfade between consecutive tracks. Creates a second ExoPlayer via YTM's internal factory, crossfades with a configurable volume curve, then releases the old player. Credits to [VazerOG](https://github.com/VazerOG) for the original implementation.
-  - Configurable duration (1–12 seconds or 500–30000ms in advanced mode)
-  - Fade curve selection: Equal Power, Ease Out Cubic, Ease Out Quad, Smoothstep — with live curve preview in settings
-  - Independent enable/disable for manual skip and auto-advance crossfade
-  - Auto-advance routed through YTM's `playNextInQueue` pipeline (`mo15738y` → `m15968e`) for proper queue advancement and media loading
-  - Session control: long-press the shuffle button to pause/resume crossfade with haptic feedback and configurable press duration
-  - Video mode automatically blocked while crossfade is active (audio-only requirement)
-  - Pause-event blocking during auto-advance crossfade to prevent YTM from killing the incoming player
 * Add search and file export to debug logs ([#997](https://github.com/MorpheApp/morphe-patches/issues/997)) ([a53a6c3](https://github.com/MorpheApp/morphe-patches/commit/a53a6c3b0c8f534e4bca4a015a25452d2c73ae8a))
 * **Reddit:** Add experimental support for `2026.13.0` ([722f5bf](https://github.com/MorpheApp/morphe-patches/commit/722f5bf34f986c51b9631575cd09eb64dac47314))
 * **Reddit:** Add experimental support for `2026.14.0` ([921fa89](https://github.com/MorpheApp/morphe-patches/commit/921fa89a37a4e318ed3ba5a0cb090b00f0a4c3af))
