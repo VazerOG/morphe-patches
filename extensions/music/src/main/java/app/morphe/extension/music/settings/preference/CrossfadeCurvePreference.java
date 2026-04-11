@@ -20,7 +20,6 @@ import java.util.Locale;
 
 import app.morphe.extension.music.patches.CrossfadeManager.FadeCurve;
 import app.morphe.extension.music.settings.Settings;
-import app.morphe.extension.shared.settings.Setting;
 
 /**
  * Custom preference that renders a live preview of the selected crossfade curve.
@@ -52,7 +51,7 @@ public final class CrossfadeCurvePreference extends Preference
                 if (Settings.CROSSFADE_ADVANCED_MODE.get()) {
                     currentDurationMs = Math.max(500, Math.min(30000, Settings.CROSSFADE_DURATION_MS.get()));
                 } else {
-                    currentDurationMs = Math.max(1, Math.min(12, Settings.CROSSFADE_DURATION.get())) * 1000;
+                    currentDurationMs = Math.max(1, Math.min(12, Settings.CROSSFADE_DURATION.get().seconds)) * 1000;
                 }
             } catch (Exception e) {
                 currentDurationMs = 3000;
@@ -215,7 +214,7 @@ public final class CrossfadeCurvePreference extends Preference
                 if (Settings.CROSSFADE_ADVANCED_MODE.get()) {
                     durationMs = Math.max(500, Math.min(30000, Settings.CROSSFADE_DURATION_MS.get()));
                 } else {
-                    durationMs = Math.max(1, Math.min(12, Settings.CROSSFADE_DURATION.get())) * 1000;
+                    durationMs = Math.max(1, Math.min(12, Settings.CROSSFADE_DURATION.get().seconds)) * 1000;
                 }
             } catch (Exception e) {
                 durationMs = 3000;

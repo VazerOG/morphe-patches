@@ -89,6 +89,36 @@
         <item>SMOOTHSTEP</item>
     </string-array>
 
+    <!-- layout.sponsorblock.sponsorBlockResourcePatch -->
+    <string-array name="morphe_music_crossfade_duration_entries">
+        <item>@string/morphe_crossfade_duration_1s</item>
+        <item>@string/morphe_crossfade_duration_2s</item>
+        <item>@string/morphe_crossfade_duration_3s</item>
+        <item>@string/morphe_crossfade_duration_4s</item>
+        <item>@string/morphe_crossfade_duration_5s</item>
+        <item>@string/morphe_crossfade_duration_6s</item>
+        <item>@string/morphe_crossfade_duration_7s</item>
+        <item>@string/morphe_crossfade_duration_8s</item>
+        <item>@string/morphe_crossfade_duration_9s</item>
+        <item>@string/morphe_crossfade_duration_10s</item>
+        <item>@string/morphe_crossfade_duration_11s</item>
+        <item>@string/morphe_crossfade_duration_12s</item>
+    </string-array>
+    <string-array name="morphe_music_crossfade_duration_entry_values">
+        <item>ONE_SECOND</item>
+        <item>TWO_SECONDS</item>
+        <item>THREE_SECONDS</item>
+        <item>FOUR_SECONDS</item>
+        <item>FIVE_SECONDS</item>
+        <item>SIX_SECONDS</item>
+        <item>SEVEN_SECONDS</item>
+        <item>EIGHT_SECONDS</item>
+        <item>NINE_SECONDS</item>
+        <item>TEN_SECONDS</item>
+        <item>ELEVEN_SECONDS</item>
+        <item>TWELVE_SECONDS</item>
+    </string-array>
+
     <!-- misc.fix.playback.spoofVideoStreamsPatch -->
     <string-array name="morphe_spoof_video_streams_client_type_entries">
         <item>Android Reel</item>

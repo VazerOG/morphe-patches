@@ -50,6 +50,27 @@ import app.morphe.extension.shared.Utils;
 @SuppressWarnings("unused")
 public class CrossfadeManager {
 
+    public enum CrossFadeDuration {
+        ONE_SECOND(1),
+        TWO_SECONDS(2),
+        THREE_SECONDS(3),
+        FOUR_SECONDS(4),
+        FIVE_SECONDS(5),
+        SIX_SECONDS(6),
+        SEVEN_SECONDS(7),
+        EIGHT_SECONDS(8),
+        NINE_SECONDS(9),
+        TEN_SECONDS(10),
+        ELEVEN_SECONDS(11),
+        TWELVE_SECONDS(12);
+
+        public final int seconds;
+
+        CrossFadeDuration(int seconds) {
+            this.seconds = seconds;
+        }
+    }
+
     // ------------------------------------------------------------------ //
     //  Interfaces — one per obfuscated class, bound at patch time         //
     // ------------------------------------------------------------------ //
@@ -1373,10 +1394,11 @@ public class CrossfadeManager {
 
     private static int getCrossfadeDurationMs() {
         if (Settings.CROSSFADE_ADVANCED_MODE.get()) {
-            int ms = Settings.CROSSFADE_DURATION_MS.get();
+            final int ms = Settings.CROSSFADE_DURATION_MS.get();
             return Math.max(500, Math.min(30000, ms));
         }
-        int sec = Settings.CROSSFADE_DURATION.get();
+
+        final int sec = Settings.CROSSFADE_DURATION.get().seconds;
         return Math.max(1, Math.min(12, sec)) * 1000;
     }
 

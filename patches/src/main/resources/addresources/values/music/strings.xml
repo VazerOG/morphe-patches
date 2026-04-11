@@ -54,8 +54,19 @@ Second \"item\" text"</string>
     <string name="morphe_music_crossfade_curve_entry_smoothstep">Smooth S-curve</string>
     <string name="morphe_music_crossfade_curve_preview_title" translatable="false"> </string>
     <string name="morphe_music_crossfade_curve_preview_summary" translatable="false"> </string>
-    <string name="morphe_music_crossfade_duration_title">Crossfade duration (seconds)</string>
-    <string name="morphe_music_crossfade_duration_summary">Duration of the crossfade effect in seconds (1–12)</string>
+    <string name="morphe_music_crossfade_duration_title">Crossfade duration</string>
+    <string name="morphe_crossfade_duration_1s">1 second</string>
+    <string name="morphe_crossfade_duration_2s">2 seconds</string>
+    <string name="morphe_crossfade_duration_3s">3 seconds</string>
+    <string name="morphe_crossfade_duration_4s">4 seconds</string>
+    <string name="morphe_crossfade_duration_5s">5 seconds</string>
+    <string name="morphe_crossfade_duration_6s">6 seconds</string>
+    <string name="morphe_crossfade_duration_7s">7 seconds</string>
+    <string name="morphe_crossfade_duration_8s">8 seconds</string>
+    <string name="morphe_crossfade_duration_9s">9 seconds</string>
+    <string name="morphe_crossfade_duration_10s">10 seconds</string>
+    <string name="morphe_crossfade_duration_11s">11 seconds</string>
+    <string name="morphe_crossfade_duration_12s">12 seconds</string>
     <string name="morphe_music_crossfade_advanced_mode_title">Advanced duration</string>
     <string name="morphe_music_crossfade_advanced_mode_summary_on">Duration is set in milliseconds</string>
     <string name="morphe_music_crossfade_advanced_mode_summary_off">Duration is set in seconds</string>

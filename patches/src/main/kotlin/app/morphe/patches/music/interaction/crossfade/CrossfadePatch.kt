@@ -208,10 +208,7 @@ val crossfadePatch = bytecodePatch(
                         key = "morphe_music_crossfade_curve_preview",
                         tag = "app.morphe.extension.music.settings.preference.CrossfadeCurvePreference",
                     ),
-                    TextPreference(
-                        key = "morphe_music_crossfade_duration",
-                        inputType = InputType.NUMBER,
-                    ),
+                    ListPreference("morphe_music_crossfade_duration"),
                     SwitchPreference("morphe_music_crossfade_advanced_mode"),
                     TextPreference(
                         key = "morphe_music_crossfade_duration_ms",
