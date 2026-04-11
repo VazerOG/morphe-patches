@@ -91,32 +91,34 @@
 
     <!-- layout.sponsorblock.sponsorBlockResourcePatch -->
     <string-array name="morphe_music_crossfade_duration_entries">
-        <item>@string/morphe_crossfade_duration_1s</item>
-        <item>@string/morphe_crossfade_duration_2s</item>
-        <item>@string/morphe_crossfade_duration_3s</item>
-        <item>@string/morphe_crossfade_duration_4s</item>
-        <item>@string/morphe_crossfade_duration_5s</item>
-        <item>@string/morphe_crossfade_duration_6s</item>
-        <item>@string/morphe_crossfade_duration_7s</item>
-        <item>@string/morphe_crossfade_duration_8s</item>
-        <item>@string/morphe_crossfade_duration_9s</item>
-        <item>@string/morphe_crossfade_duration_10s</item>
-        <item>@string/morphe_crossfade_duration_11s</item>
-        <item>@string/morphe_crossfade_duration_12s</item>
+        <item>@string/morphe_crossfade_duration_250ms</item>
+        <item>@string/morphe_crossfade_duration_500ms</item>
+        <item>@string/morphe_crossfade_duration_750ms</item>
+        <item>@string/morphe_crossfade_duration_1000ms</item>
+        <item>@string/morphe_crossfade_duration_2000ms</item>
+        <item>@string/morphe_crossfade_duration_3000ms</item>
+        <item>@string/morphe_crossfade_duration_4000ms</item>
+        <item>@string/morphe_crossfade_duration_5000ms</item>
+        <item>@string/morphe_crossfade_duration_6000ms</item>
+        <item>@string/morphe_crossfade_duration_7000ms</item>
+        <item>@string/morphe_crossfade_duration_8000ms</item>
+        <item>@string/morphe_crossfade_duration_9000ms</item>
+        <item>@string/morphe_crossfade_duration_10000ms</item>
     </string-array>
     <string-array name="morphe_music_crossfade_duration_entry_values">
-        <item>ONE_SECOND</item>
-        <item>TWO_SECONDS</item>
-        <item>THREE_SECONDS</item>
-        <item>FOUR_SECONDS</item>
-        <item>FIVE_SECONDS</item>
-        <item>SIX_SECONDS</item>
-        <item>SEVEN_SECONDS</item>
-        <item>EIGHT_SECONDS</item>
-        <item>NINE_SECONDS</item>
-        <item>TEN_SECONDS</item>
-        <item>ELEVEN_SECONDS</item>
-        <item>TWELVE_SECONDS</item>
+        <item>MILLISECONDS_250</item>
+        <item>MILLISECONDS_500</item>
+        <item>MILLISECONDS_750</item>
+        <item>MILLISECONDS_1000</item>
+        <item>MILLISECONDS_2000</item>
+        <item>MILLISECONDS_3000</item>
+        <item>MILLISECONDS_4000</item>
+        <item>MILLISECONDS_5000</item>
+        <item>MILLISECONDS_6000</item>
+        <item>MILLISECONDS_7000</item>
+        <item>MILLISECONDS_8000</item>
+        <item>MILLISECONDS_9000</item>
+        <item>MILLISECONDS_10000</item>
     </string-array>
 
     <!-- misc.fix.playback.spoofVideoStreamsPatch -->

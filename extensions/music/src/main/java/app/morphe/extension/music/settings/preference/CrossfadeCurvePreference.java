@@ -20,6 +20,7 @@ import java.util.Locale;
 
 import app.morphe.extension.music.patches.CrossfadeManager.FadeCurve;
 import app.morphe.extension.music.settings.Settings;
+import app.morphe.extension.shared.ui.Dim;
 
 /**
  * Custom preference that renders a live preview of the selected crossfade curve.
@@ -40,22 +41,8 @@ public final class CrossfadeCurvePreference extends Preference
         public void run() {
             if (curveView == null || !curveView.isAttachedToWindow()) return;
 
-            FadeCurve currentCurve;
-            int currentDurationMs;
-            try {
-                currentCurve = Settings.CROSSFADE_CURVE.get();
-            } catch (Exception e) {
-                currentCurve = FadeCurve.EQUAL_POWER;
-            }
-            try {
-                if (Settings.CROSSFADE_ADVANCED_MODE.get()) {
-                    currentDurationMs = Math.max(500, Math.min(30000, Settings.CROSSFADE_DURATION_MS.get()));
-                } else {
-                    currentDurationMs = Math.max(1, Math.min(12, Settings.CROSSFADE_DURATION.get().seconds)) * 1000;
-                }
-            } catch (Exception e) {
-                currentDurationMs = 3000;
-            }
+            FadeCurve currentCurve = Settings.CROSSFADE_CURVE.get();
+            final int currentDurationMs = Settings.CROSSFADE_DURATION.get().milliseconds;
 
             if (currentCurve != lastCurve || currentDurationMs != lastDurationMs) {
                 lastCurve = currentCurve;
@@ -97,14 +84,13 @@ public final class CrossfadeCurvePreference extends Preference
     protected View onCreateView(ViewGroup parent) {
         LinearLayout layout = new LinearLayout(getContext());
         layout.setOrientation(LinearLayout.VERTICAL);
-        int padH = dp(16);
-        int padV = dp(8);
+        final int padH = Dim.dp16;
+        final int padV = Dim.dp8;
         layout.setPadding(padH, padV, padH, padV);
 
         curveView = new CurveView(getContext());
-        int height = dp(160);
         layout.addView(curveView, new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, height));
+                LinearLayout.LayoutParams.MATCH_PARENT, Dim.dp(160)));
 
         handler.postDelayed(pollRunnable, 500);
 
@@ -137,12 +123,6 @@ public final class CrossfadeCurvePreference extends Preference
                 curveView.postInvalidate();
             }
         }
-    }
-
-    private int dp(float dp) {
-        return (int) TypedValue.applyDimension(
-                TypedValue.COMPLEX_UNIT_DIP, dp,
-                getContext().getResources().getDisplayMetrics());
     }
 
     @SuppressLint("ViewConstructor")
@@ -202,23 +182,8 @@ public final class CrossfadeCurvePreference extends Preference
                 canvas.drawText(String.format(Locale.US, "%.0f%%", val * 100), padL - dp(4), y, textPaint);
             }
 
-            FadeCurve curve;
-            try {
-                curve = Settings.CROSSFADE_CURVE.get();
-            } catch (Exception e) {
-                curve = FadeCurve.EQUAL_POWER;
-            }
-
-            int durationMs;
-            try {
-                if (Settings.CROSSFADE_ADVANCED_MODE.get()) {
-                    durationMs = Math.max(500, Math.min(30000, Settings.CROSSFADE_DURATION_MS.get()));
-                } else {
-                    durationMs = Math.max(1, Math.min(12, Settings.CROSSFADE_DURATION.get().seconds)) * 1000;
-                }
-            } catch (Exception e) {
-                durationMs = 3000;
-            }
+            FadeCurve curve = Settings.CROSSFADE_CURVE.get();
+            final int durationMs = Settings.CROSSFADE_DURATION.get().milliseconds;
 
             textPaint.setTextAlign(Paint.Align.CENTER);
             int xSteps = 4;
@@ -273,13 +238,12 @@ public final class CrossfadeCurvePreference extends Preference
             inPaint.setStyle(Paint.Style.STROKE);
             canvas.drawText("Incoming", inLegendX + dp(8), legendY + dp(3.5f), textPaint);
 
-            String curveName;
-            switch (curve) {
-                case EASE_OUT_CUBIC: curveName = "Subtle hold"; break;
-                case EASE_OUT_QUAD: curveName = "Gentle ease"; break;
-                case SMOOTHSTEP: curveName = "Smooth S-curve"; break;
-                default: curveName = "Equal power"; break;
-            }
+            String curveName = switch (curve) {
+                case EASE_OUT_CUBIC -> "Subtle hold";
+                case EASE_OUT_QUAD -> "Gentle ease";
+                case SMOOTHSTEP -> "Smooth S-curve";
+                default -> "Equal power";
+            };
             textPaint.setTextAlign(Paint.Align.RIGHT);
             canvas.drawText(curveName, w - padR, legendY + dp(3.5f), textPaint);
         }

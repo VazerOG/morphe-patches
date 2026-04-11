@@ -51,23 +51,24 @@ import app.morphe.extension.shared.Utils;
 public class CrossfadeManager {
 
     public enum CrossFadeDuration {
-        ONE_SECOND(1),
-        TWO_SECONDS(2),
-        THREE_SECONDS(3),
-        FOUR_SECONDS(4),
-        FIVE_SECONDS(5),
-        SIX_SECONDS(6),
-        SEVEN_SECONDS(7),
-        EIGHT_SECONDS(8),
-        NINE_SECONDS(9),
-        TEN_SECONDS(10),
-        ELEVEN_SECONDS(11),
-        TWELVE_SECONDS(12);
+        MILLISECONDS_250(250),
+        MILLISECONDS_500(500),
+        MILLISECONDS_750(750),
+        MILLISECONDS_1000(1_000),
+        MILLISECONDS_2000(2_000),
+        MILLISECONDS_3000(3_000),
+        MILLISECONDS_4000(4_000),
+        MILLISECONDS_5000(5_000),
+        MILLISECONDS_6000(6_000),
+        MILLISECONDS_7000(7_000),
+        MILLISECONDS_8000(8_000),
+        MILLISECONDS_9000(9_000),
+        MILLISECONDS_10000(10_000);
 
-        public final int seconds;
+        public final int milliseconds;
 
-        CrossFadeDuration(int seconds) {
-            this.seconds = seconds;
+        CrossFadeDuration(int milliseconds) {
+            this.milliseconds = milliseconds;
         }
     }
 
@@ -1393,13 +1394,7 @@ public class CrossfadeManager {
     }
 
     private static int getCrossfadeDurationMs() {
-        if (Settings.CROSSFADE_ADVANCED_MODE.get()) {
-            final int ms = Settings.CROSSFADE_DURATION_MS.get();
-            return Math.max(500, Math.min(30000, ms));
-        }
-
-        final int sec = Settings.CROSSFADE_DURATION.get().seconds;
-        return Math.max(1, Math.min(12, sec)) * 1000;
+        return Settings.CROSSFADE_DURATION.get().milliseconds;
     }
 
     private static long getLongPressThresholdMs() {
@@ -1412,9 +1407,10 @@ public class CrossfadeManager {
     // ------------------------------------------------------------------ //
 
     private static final String[] SHUFFLE_IDS = {
-        "queue_shuffle_button", "queue_shuffle",
-        "playback_queue_shuffle_button_view",
-        "overlay_queue_shuffle_button_view"
+            "queue_shuffle_button",
+            "queue_shuffle",
+            "playback_queue_shuffle_button_view",
+            "overlay_queue_shuffle_button_view"
     };
 
     private static Runnable pendingLongPress;
