@@ -45,7 +45,7 @@ public class Settings extends SharedYouTubeSettings {
     public static final BooleanSetting PERMANENT_REPEAT = new BooleanSetting("morphe_music_play_permanent_repeat", FALSE, true);
 
     // Crossfade
-    public static final BooleanSetting CROSSFADE_ENABLED = new BooleanSetting("morphe_music_crossfade_enabled", TRUE);
+    public static final BooleanSetting CROSSFADE_ENABLED = new BooleanSetting("morphe_music_crossfade_enabled", FALSE);
     public static final EnumSetting<FadeCurve> CROSSFADE_CURVE = new EnumSetting<>("morphe_music_crossfade_curve", FadeCurve.EQUAL_POWER);
     public static final BooleanSetting CROSSFADE_ADVANCED_MODE = new BooleanSetting("morphe_music_crossfade_advanced_mode", FALSE);
     public static final IntegerSetting CROSSFADE_DURATION = new IntegerSetting("morphe_music_crossfade_duration", 3, parentNot(CROSSFADE_ADVANCED_MODE));
