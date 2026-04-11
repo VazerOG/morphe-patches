@@ -77,8 +77,6 @@ Second \"item\" text"</string>
     <string name="morphe_music_crossfade_session_control_title">Session control</string>
     <string name="morphe_music_crossfade_session_control_summary_on">"Long-press the shuffle button to pause or resume crossfade"</string>
     <string name="morphe_music_crossfade_session_control_summary_off">Session control is disabled</string>
-    <string name="morphe_music_crossfade_long_press_duration_title">Long-press duration (ms)</string>
-    <string name="morphe_music_crossfade_long_press_duration_summary">How long to hold the shuffle button to toggle crossfade (300–2000)</string>
     <string name="morphe_music_crossfade_about_title">About</string>
     <string name="morphe_music_crossfade_about_summary">"Crossfade is available with YouTube Music 8.x
 

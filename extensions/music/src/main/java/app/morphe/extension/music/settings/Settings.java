@@ -52,7 +52,6 @@ public class Settings extends SharedYouTubeSettings {
     public static final BooleanSetting CROSSFADE_ON_SKIP = new BooleanSetting("morphe_music_crossfade_on_skip", TRUE);
     public static final BooleanSetting CROSSFADE_ON_AUTO_ADVANCE = new BooleanSetting("morphe_music_crossfade_on_auto_advance", TRUE);
     public static final BooleanSetting CROSSFADE_SESSION_CONTROL = new BooleanSetting("morphe_music_crossfade_session_control", TRUE);
-    public static final IntegerSetting CROSSFADE_LONG_PRESS_DURATION = new IntegerSetting("morphe_music_crossfade_long_press_duration", 800);
 
     // Miscellaneous
     public static final EnumSetting<ClientType> SPOOF_VIDEO_STREAMS_CLIENT_TYPE = new EnumSetting<>("morphe_spoof_video_streams_client_type",

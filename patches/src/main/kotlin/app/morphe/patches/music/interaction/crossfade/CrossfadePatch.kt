@@ -213,13 +213,9 @@ val crossfadePatch = bytecodePatch(
                     SwitchPreference("morphe_music_crossfade_on_skip"),
                     SwitchPreference("morphe_music_crossfade_on_auto_advance"),
                     SwitchPreference("morphe_music_crossfade_session_control"),
-                    TextPreference(
-                        key = "morphe_music_crossfade_long_press_duration",
-                        inputType = InputType.NUMBER,
-                    ),
                     NonInteractivePreference("morphe_music_crossfade_about")
-                ),
-            ),
+                )
+            )
         )
 
         // -------------------------------------------------------------- //

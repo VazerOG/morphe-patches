@@ -1398,8 +1398,7 @@ public class CrossfadeManager {
     }
 
     private static long getLongPressThresholdMs() {
-        int ms = Settings.CROSSFADE_LONG_PRESS_DURATION.get();
-        return Math.max(300, Math.min(2000, ms));
+        return 800;
     }
 
     // ------------------------------------------------------------------ //
