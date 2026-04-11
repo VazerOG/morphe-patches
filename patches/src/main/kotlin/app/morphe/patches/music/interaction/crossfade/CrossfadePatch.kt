@@ -148,7 +148,7 @@ private fun MutableClass.addFieldSetter(
 @Suppress("unused")
 val crossfadePatch = bytecodePatch(
     name = "Track crossfade",
-    description = "Adds a true dual-player crossfade between consecutive tracks.",
+    description = "Adds a true dual-player crossfade between consecutive tracks. This patch currently requires YouTube 8.x",
 ) {
     dependsOn(
         sharedExtensionPatch,
@@ -202,9 +202,6 @@ val crossfadePatch = bytecodePatch(
                 key = "morphe_music_crossfade_screen",
                 sorting = PreferenceScreenPreference.Sorting.UNSORTED,
                 preferences = setOf(
-                    NonInteractivePreference(
-                        key = "morphe_music_crossfade_disclaimer",
-                    ),
                     SwitchPreference("morphe_music_crossfade_enabled"),
                     ListPreference("morphe_music_crossfade_curve"),
                     NonInteractivePreference(
@@ -226,6 +223,9 @@ val crossfadePatch = bytecodePatch(
                     TextPreference(
                         key = "morphe_music_crossfade_long_press_duration",
                         inputType = InputType.NUMBER,
+                    ),
+                    NonInteractivePreference(
+                        key = "morphe_music_crossfade_disclaimer",
                     ),
                     NonInteractivePreference(
                         key = "morphe_music_crossfade_credit",
