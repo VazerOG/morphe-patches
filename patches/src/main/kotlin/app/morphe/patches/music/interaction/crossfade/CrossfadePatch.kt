@@ -224,13 +224,7 @@ val crossfadePatch = bytecodePatch(
                         key = "morphe_music_crossfade_long_press_duration",
                         inputType = InputType.NUMBER,
                     ),
-                    NonInteractivePreference(
-                        key = "morphe_music_crossfade_disclaimer",
-                    ),
-                    NonInteractivePreference(
-                        key = "morphe_music_crossfade_credit",
-                        summaryKey = "morphe_music_crossfade_credit_summary",
-                    ),
+                    NonInteractivePreference("morphe_music_crossfade_about")
                 ),
             ),
         )
