@@ -1037,9 +1037,10 @@ val crossfadePatch = bytecodePatch(
 
         // --- VideoToggleAccess on nba ---
         videoToggleClass.interfaces.add(VIDEO_TOGGLE_INTERFACE)
-        val stateProviderClass = mutableClassDefBy(videoToggleClass.fields.first {
+        val videoToggleClassStateProviderField = videoToggleClass.fields.first {
             it.type.startsWith("L")
-        }.type)
+        }
+        val stateProviderClass = mutableClassDefBy(videoToggleClassStateProviderField.type)
 
         // getState returns an enum (nlv) representing the current playback
         // content mode.  We find it as the first no-arg method returning a
@@ -1080,11 +1081,7 @@ val crossfadePatch = bytecodePatch(
                 addInstructions(
                     0,
                     """
-                        iget-object v0, p0, ${
-                        videoToggleClass.fields.first {
-                            it.type.startsWith("L")
-                        }
-                    }
+                        iget-object v0, p0, $videoToggleClassStateProviderField
                         invoke-virtual { v0 }, $getStateMethod
                         move-result-object v0
                         invoke-static { v0 }, $isAudioModeMethod
@@ -1131,11 +1128,7 @@ val crossfadePatch = bytecodePatch(
                 addInstructions(
                     0,
                     """
-                        iget-object v0, p0, ${
-                        videoToggleClass.fields.first {
-                            it.type.startsWith("L")
-                        }
-                    }
+                        iget-object v0, p0, $videoToggleClassStateProviderField
                         sget-object v1, $atvPreferredField
                         invoke-virtual { v0, v1 }, $setStateMethod
                         return-void
@@ -1295,11 +1288,7 @@ val crossfadePatch = bytecodePatch(
                 addInstructions(
                     0,
                     """
-                        iget-object v0, p0, ${
-                        videoToggleClass.fields.first {
-                            it.type.startsWith("L")
-                        }
-                    }
+                        iget-object v0, p0, $videoToggleClassStateProviderField
                         sget-object v1, $atvPreferredField
                         invoke-virtual { v0, v1 }, $silentSetOnProvider
                         return-void
@@ -1322,11 +1311,7 @@ val crossfadePatch = bytecodePatch(
                 addInstructions(
                     0,
                     """
-                        iget-object v0, p0, ${
-                        videoToggleClass.fields.first {
-                            it.type.startsWith("L")
-                        }
-                    }
+                        iget-object v0, p0, $videoToggleClassStateProviderField
                         sget-object v1, $omvPreferredField
                         invoke-virtual { v0, v1 }, $silentSetOnProvider
                         return-void
