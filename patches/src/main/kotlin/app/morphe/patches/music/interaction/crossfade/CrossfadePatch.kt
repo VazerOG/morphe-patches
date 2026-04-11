@@ -1126,26 +1126,24 @@ val crossfadePatch = bytecodePatch(
             .reference as MethodReference
 
         // 3. Find the broadcast method implementation on the chxp class
-        val chxpClass = classDefBy(chxpType)
-        val broadcastMethodImpl = chxpClass.methods.firstOrNull { m ->
-            m.name == broadcastMethodRef.name
-                && m.returnType == "V"
-                && m.parameterTypes.size == 1
-                && m.parameterTypes[0].toString() == "Ljava/lang/Object;"
-        } ?: error("Broadcast method ${broadcastMethodRef.name} not found on $chxpType")
+        val broadcastMethodFingerprint = Fingerprint(
+            definingClass = chxpType,
+            name = broadcastMethodRef.name,
+            returnType = "V",
+            parameters = listOf("Ljava/lang/Object;"),
+            filters = listOf(
+                methodCall(
+                    opcodes = listOf(Opcode.INVOKE_VIRTUAL, Opcode.INVOKE_INTERFACE),
+                    returnType = "V",
+                    parameters = listOf("Ljava/lang/Object;"),
+                )
+            )
+        )
 
         // 4. From broadcast method's bytecode, find the silent setter (m34891ax)
         //    — the first invoke on a non-Object class that takes Object
-        val silentSetMethodRef = broadcastMethodImpl.implementation!!.instructions
-            .filterIsInstance<ReferenceInstruction>()
-            .filter { it.opcode == Opcode.INVOKE_VIRTUAL || it.opcode == Opcode.INVOKE_DIRECT }
-            .map { it.reference }
-            .filterIsInstance<MethodReference>()
-            .first { ref ->
-                ref.returnType == "V"
-                    && ref.parameterTypes.map { it.toString() } == listOf("Ljava/lang/Object;")
-                    && ref.definingClass != "Ljava/lang/Object;"
-            }
+        val silentSetMethodRef = broadcastMethodFingerprint.instructionMatches.first()
+            .getInstruction<ReferenceInstruction>().getReference<MethodReference>()!!
 
         // 5. Find OMV_PREFERRED — the second enum constant (ordinal 1)
         val stateEnumStaticFields = classDefBy(stateType).fields.filter { field ->
