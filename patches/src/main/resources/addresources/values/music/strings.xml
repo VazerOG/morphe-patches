@@ -80,6 +80,8 @@ Second \"item\" text"</string>
     <string name="morphe_music_crossfade_about_title">About</string>
     <string name="morphe_music_crossfade_about_summary">"Crossfade is available with YouTube Music 8.x
 
+Long press the shuffle button to disable/enable
+
 Feature implementation by VazerOG"</string>
 
     <!-- interaction.permanentrepeat.permanentRepeatPatch -->
