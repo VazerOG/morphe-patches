@@ -47,4 +47,39 @@ internal object Constants {
             )
         )
     )
+
+    /**
+     * Compatibility surface for patches that have only been validated against the
+     * YouTube Music 9.x release line.  Used by RVX migration patches whose
+     * fingerprints/resource keys have not been verified on 7.x or 8.x builds.
+     */
+    val COMPATIBILITY_YOUTUBE_MUSIC_9X = Compatibility(
+        name = "YouTube Music",
+        packageName = "com.google.android.apps.youtube.music",
+        apkFileType = ApkFileType.APK_REQUIRED,
+        appIconColor = 0xFF0000,
+        signatures = setOf(
+            // Android 13+
+            "6a2f65ec694a6a632acdcb5080912a565f903d4b8d83f0eb8e44fbdf2660d8e1",
+            // Android 7+
+            "a2a1ad7ba7f41dfca4514e2afeb90691719af6d0fdbed4b09bbf0ed897701ceb"
+        ),
+        targets = listOf(
+            AppTarget(
+                version = "9.21.51",
+                minSdk = 26,
+                isExperimental = true,
+            ),
+            AppTarget(
+                version = "9.20.52",
+                minSdk = 26,
+                isExperimental = true,
+            ),
+            AppTarget(
+                version = "9.19.50",
+                minSdk = 26,
+                isExperimental = true,
+            )
+        )
+    )
 }
